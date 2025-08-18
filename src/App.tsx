@@ -7,7 +7,7 @@ import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import AdminButton from './components/AdminButton';
 import { MenuData, Category } from './types/menu';
-import { ApiService } from './services/api';
+import { getMenuData, updateMenuData, resetMenuData } from './utils/fileStorage';
 import menuData from './data/menu.json';
 import './App.css';
 
@@ -20,19 +20,18 @@ const App: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  // Загружаем данные из API при загрузке приложения
+  // Загружаем данные при загрузке приложения
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = () => {
       try {
         setLoading(true);
-        const menuData = await ApiService.getMenu();
-        setData(menuData);
+        const data = getMenuData();
+        setData(data);
         setError(null);
       } catch (err) {
         console.error('Ошибка при загрузке данных:', err);
-        setError('Не удалось загрузить данные меню');
-        // Используем данные по умолчанию при ошибке
         setData(menuData);
+        setError(null);
       } finally {
         setLoading(false);
       }
@@ -80,24 +79,23 @@ const App: React.FC = () => {
     setLoginError('');
   };
 
-  const handleUpdateData = async (newData: MenuData) => {
+  const handleUpdateData = (newData: MenuData) => {
     try {
-      await ApiService.updateMenu(newData);
+      updateMenuData(newData);
       setData(newData);
     } catch (err) {
       console.error('Ошибка при сохранении данных:', err);
-      alert('Ошибка при сохранении данных. Попробуйте еще раз.');
+      setData(newData);
     }
   };
 
-  const handleResetData = async () => {
+  const handleResetData = () => {
     try {
-      await ApiService.resetMenu();
-      const resetData = await ApiService.getMenu();
+      const resetData = resetMenuData();
       setData(resetData);
     } catch (err) {
       console.error('Ошибка при сбросе данных:', err);
-      alert('Ошибка при сбросе данных. Попробуйте еще раз.');
+      setData(menuData);
     }
   };
 
