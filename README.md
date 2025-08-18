@@ -10,12 +10,14 @@
 2. Создайте новый проект
 3. В SQL Editor выполните скрипт из `database/schema.sql`
 4. Скопируйте URL и ключ из Settings → API
-5. Создайте файл `.env.local` с переменными:
+5. Создайте файл `.env.local` с переменными (НЕ коммитьте этот файл):
 
 ```env
 REACT_APP_SUPABASE_URL=https://your-project.supabase.co
 REACT_APP_SUPABASE_ANON_KEY=your-anon-key-here
 ```
+
+**⚠️ ВАЖНО:** Файл `.env.local` содержит приватные ключи и НЕ должен попадать в Git!
 
 ### Запуск приложения:
 
