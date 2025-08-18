@@ -11,11 +11,30 @@ import menuData from './data/menu.json';
 import './App.css';
 
 const App: React.FC = () => {
-  const [data, setData] = useState<MenuData>(menuData);
+  // Загружаем данные из localStorage или используем данные по умолчанию
+  const getInitialData = (): MenuData => {
+    const savedData = localStorage.getItem('menuData');
+    if (savedData) {
+      try {
+        return JSON.parse(savedData);
+      } catch (error) {
+        console.error('Ошибка при загрузке данных из localStorage:', error);
+        return menuData;
+      }
+    }
+    return menuData;
+  };
+
+  const [data, setData] = useState<MenuData>(getInitialData);
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
+
+  // Сохраняем данные в localStorage при каждом изменении
+  useEffect(() => {
+    localStorage.setItem('menuData', JSON.stringify(data));
+  }, [data]);
 
   useEffect(() => {
     // Устанавливаем первую категорию как активную при загрузке
@@ -60,6 +79,11 @@ const App: React.FC = () => {
     setData(newData);
   };
 
+  const handleResetData = () => {
+    setData(menuData);
+    localStorage.removeItem('menuData');
+  };
+
   const handleLogoClick = () => {
     // Переход на главную страницу (первая категория)
     if (data.categories.length > 0) {
@@ -75,6 +99,7 @@ const App: React.FC = () => {
         onUpdateData={handleUpdateData}
         onLogout={handleLogout}
         onLogoClick={handleLogoClick}
+        onResetData={handleResetData}
       />
     );
   }

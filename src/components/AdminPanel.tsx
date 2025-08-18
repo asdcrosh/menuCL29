@@ -7,6 +7,7 @@ interface AdminPanelProps {
   onUpdateData: (data: MenuData) => void;
   onLogout: () => void;
   onLogoClick?: () => void;
+  onResetData?: () => void;
 }
 
 interface ModalProps {
@@ -272,7 +273,7 @@ const ItemForm: React.FC<{
   );
 };
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, onLogoClick }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, onLogoClick, onResetData }) => {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingSubCategory, setEditingSubCategory] = useState<SubCategory | null>(null);
@@ -431,6 +432,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
             <p>Управление меню ресторана</p>
           </div>
           <div className="admin-actions">
+            {onResetData && (
+              <button 
+                onClick={() => {
+                  if (window.confirm('Вы уверены, что хотите сбросить все данные к исходному состоянию? Это действие нельзя отменить.')) {
+                    onResetData();
+                  }
+                }} 
+                className="reset-button"
+                title="Сбросить данные"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                </svg>
+                Сбросить
+              </button>
+            )}
             <button onClick={onLogout} className="logout-button">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
