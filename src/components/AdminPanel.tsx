@@ -4,7 +4,7 @@ import './AdminPanel.css';
 
 interface AdminPanelProps {
   data: MenuData;
-  onUpdateData: (data: MenuData) => void;
+  onUpdateData: (data: MenuData, action?: string, itemName?: string) => void;
   onLogout: () => void;
   onLogoClick?: () => void;
   onResetData?: () => void;
@@ -360,7 +360,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
 
     const updatedData = { ...data };
     updatedData.categories.push(newCategory);
-    onUpdateData(updatedData);
+    onUpdateData(updatedData, 'add', categoryData.name);
     setShowAddCategory(false);
   };
 
