@@ -48,6 +48,7 @@ export class DatabaseService {
         id: cat.id.toString(),
         name: cat.name,
         icon: cat.icon,
+        orderIndex: cat.order_index,
         subCategories: subCategoriesData
           .filter(sub => sub.category_id === cat.id)
           .map(sub => ({
@@ -130,9 +131,27 @@ export class DatabaseService {
       .update({
         name: category.name,
         icon: category.icon,
+        order_index: category.orderIndex,
         updated_at: new Date().toISOString()
       })
       .eq('id', parseInt(id));
+
+    if (error) throw error;
+  }
+
+  // Обновление порядка категорий
+  static async updateCategoryOrder(categoryId: string, newOrderIndex: number): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
+    const { error } = await supabase
+      .from('categories')
+      .update({
+        order_index: newOrderIndex,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', parseInt(categoryId));
 
     if (error) throw error;
   }

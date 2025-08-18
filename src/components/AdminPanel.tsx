@@ -438,6 +438,35 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
     }
   };
 
+  const handleMoveCategory = async (categoryId: string, direction: 'up' | 'down') => {
+    try {
+      const currentIndex = data.categories.findIndex(cat => cat.id === categoryId);
+      if (currentIndex === -1) return;
+
+      const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      if (newIndex < 0 || newIndex >= data.categories.length) return;
+
+      // Обновляем порядок в базе данных
+      await DatabaseService.updateCategoryOrder(categoryId, newIndex);
+      await DatabaseService.updateCategoryOrder(data.categories[newIndex].id, currentIndex);
+
+      // Обновляем локальное состояние
+      const updatedData = { ...data };
+      const [movedCategory] = updatedData.categories.splice(currentIndex, 1);
+      updatedData.categories.splice(newIndex, 0, movedCategory);
+      
+      // Обновляем orderIndex для всех категорий
+      updatedData.categories.forEach((cat, index) => {
+        cat.orderIndex = index;
+      });
+
+      onUpdateData(updatedData);
+    } catch (error) {
+      console.error('Ошибка при перемещении категории:', error);
+      alert('Ошибка при перемещении категории. Проверьте подключение к базе данных.');
+    }
+  };
+
   const handleAddSubCategory = async (subCategoryData: Omit<SubCategory, 'id'>) => {
     console.log('handleAddSubCategory called:', subCategoryData); // Отладка
     try {
@@ -529,22 +558,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
             <p>Управление меню ресторана</p>
           </div>
           <div className="admin-actions">
-            {onResetData && (
-              <button 
-                onClick={() => {
-                  if (window.confirm('Вы уверены, что хотите сбросить все данные к исходному состоянию? Это действие нельзя отменить.')) {
-                    onResetData();
-                  }
-                }} 
-                className="reset-button"
-                title="Сбросить данные"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
-                </svg>
-                Сбросить
-              </button>
-            )}
             <button onClick={onLogout} className="logout-button">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
@@ -603,6 +616,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                       </div>
                     </div>
                     <div className="category-actions">
+                      <button 
+                        onClick={() => handleMoveCategory(category.id, 'up')}
+                        className="action-button move"
+                        title="Переместить вверх"
+                        disabled={data.categories.indexOf(category) === 0}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+                        </svg>
+                      </button>
+                      <button 
+                        onClick={() => handleMoveCategory(category.id, 'down')}
+                        className="action-button move"
+                        title="Переместить вниз"
+                        disabled={data.categories.indexOf(category) === data.categories.length - 1}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
+                        </svg>
+                      </button>
                       <button 
                         onClick={() => {
                           console.log('Edit category button clicked:', category.id); // Отладка
