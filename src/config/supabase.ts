@@ -1,13 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase URL или ключ не настроены. Проверьте переменные окружения.');
+  console.warn('Supabase URL или ключ не настроены. Приложение будет работать в режиме только чтение.');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Создаем клиент только если переменные настроены
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // Типы для базы данных
 export interface Database {

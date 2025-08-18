@@ -5,6 +5,12 @@ export class DatabaseService {
   // Загрузка всех данных меню
   static async getMenuData(): Promise<MenuData> {
     try {
+      // Проверяем, настроен ли Supabase
+      if (!supabase) {
+        console.warn('Supabase не настроен, используем локальные данные');
+        throw new Error('Supabase не настроен');
+      }
+
       // Загружаем данные ресторана
       const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurant')
@@ -83,7 +89,7 @@ export class DatabaseService {
   // Добавление категории
   static async addCategory(category: Omit<Category, 'id' | 'subCategories'>): Promise<number> {
     // Проверяем, настроен ли Supabase
-    if (!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY) {
+    if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
     }
 
@@ -103,6 +109,10 @@ export class DatabaseService {
 
   // Обновление категории
   static async updateCategory(id: string, category: Partial<Category>): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     const { error } = await supabase
       .from('categories')
       .update({
@@ -117,6 +127,10 @@ export class DatabaseService {
 
   // Удаление категории
   static async deleteCategory(id: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     const { error } = await supabase
       .from('categories')
       .delete()
@@ -127,6 +141,10 @@ export class DatabaseService {
 
   // Добавление подкатегории
   static async addSubCategory(subCategory: Omit<SubCategory, 'id' | 'items'>): Promise<number> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     const { data, error } = await supabase
       .from('sub_categories')
       .insert({
@@ -143,6 +161,10 @@ export class DatabaseService {
 
   // Обновление подкатегории
   static async updateSubCategory(id: string, subCategory: Partial<SubCategory>): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     const { error } = await supabase
       .from('sub_categories')
       .update({
@@ -157,6 +179,10 @@ export class DatabaseService {
 
   // Удаление подкатегории
   static async deleteSubCategory(id: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     const { error } = await supabase
       .from('sub_categories')
       .delete()
@@ -167,6 +193,10 @@ export class DatabaseService {
 
   // Добавление блюда
   static async addItem(item: Omit<MenuItem, 'id'>): Promise<number> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     const { data, error } = await supabase
       .from('items')
       .insert({
@@ -186,6 +216,10 @@ export class DatabaseService {
 
   // Обновление блюда
   static async updateItem(id: string, item: Partial<MenuItem>): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     const { error } = await supabase
       .from('items')
       .update({
@@ -204,6 +238,10 @@ export class DatabaseService {
 
   // Удаление блюда
   static async deleteItem(id: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     const { error } = await supabase
       .from('items')
       .delete()
@@ -214,6 +252,10 @@ export class DatabaseService {
 
   // Сброс к исходным данным
   static async resetToInitialData(): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     try {
       // Очищаем все таблицы
       await supabase.from('items').delete().neq('id', 0);
