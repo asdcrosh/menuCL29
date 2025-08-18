@@ -79,7 +79,19 @@ export class DatabaseService {
       };
     } catch (error) {
       console.error('Ошибка при загрузке данных из базы:', error);
-      console.log('Используем fallback данные...');
+      
+      // Проверяем тип ошибки для лучшей диагностики
+      if (error instanceof Error) {
+        if (error.message.includes('Supabase не настроен')) {
+          console.log('⚠️ Supabase не настроен - используем fallback данные');
+        } else if (error.message.includes('fetch')) {
+          console.log('🌐 Ошибка сети - проверьте подключение к интернету');
+        } else if (error.message.includes('RLS')) {
+          console.log('🔒 Ошибка RLS - проверьте политики безопасности в Supabase');
+        } else {
+          console.log('❌ Неизвестная ошибка базы данных');
+        }
+      }
       
       // Возвращаем локальные данные как fallback
       return import('../data/menu.json').then(module => module.default);

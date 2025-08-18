@@ -458,10 +458,25 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
         onUpdateData(updatedData);
         setShowAddSubCategory(false);
       }
-    } catch (error) {
-      console.error('Ошибка при добавлении подкатегории:', error);
-      alert('Ошибка при добавлении подкатегории. Проверьте подключение к базе данных.');
-    }
+            } catch (error) {
+          console.error('Ошибка при добавлении подкатегории:', error);
+          
+          let errorMessage = 'Ошибка при добавлении подкатегории. ';
+          
+          if (error instanceof Error) {
+            if (error.message.includes('Supabase не настроен')) {
+              errorMessage += 'GitHub Secrets не настроены. Следуйте инструкции в QUICK_SETUP.md';
+            } else if (error.message.includes('RLS')) {
+              errorMessage += 'Ошибка RLS. Отключите Row Level Security в Supabase.';
+            } else if (error.message.includes('fetch')) {
+              errorMessage += 'Ошибка сети. Проверьте подключение к интернету.';
+            } else {
+              errorMessage += 'Проверьте подключение к базе данных.';
+            }
+          }
+          
+          alert(errorMessage);
+        }
   };
 
   const handleUpdateSubCategory = async (updatedSubCategory: SubCategory) => {
