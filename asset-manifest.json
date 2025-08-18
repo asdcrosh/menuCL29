@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/menuCL29/static/css/main.8210ecac.css",
+    "main.js": "/menuCL29/static/js/main.07662c4e.js",
+    "index.html": "/menuCL29/index.html",
+    "main.8210ecac.css.map": "/menuCL29/static/css/main.8210ecac.css.map",
+    "main.07662c4e.js.map": "/menuCL29/static/js/main.07662c4e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.8210ecac.css",
+    "static/js/main.07662c4e.js"
+  ]
+}
