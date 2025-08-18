@@ -4,6 +4,7 @@ export interface MenuItem {
   description: string;
   price: number;
   image?: string;
+  imageUrl?: string; // Для совместимости с базой данных
   category: string;
   subCategory: string;
   available: boolean;

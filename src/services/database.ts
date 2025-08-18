@@ -57,8 +57,9 @@ export class DatabaseService {
                 price: item.price,
                 category: cat.id.toString(),
                 subCategory: sub.id.toString(),
-                available: item.available,
-                imageUrl: item.image_url
+                                 available: item.available,
+                 imageUrl: item.image_url,
+                 image: item.image_url
               }))
           }))
       }));
@@ -166,7 +167,7 @@ export class DatabaseService {
         price: item.price,
         sub_category_id: parseInt(item.subCategory),
         available: item.available ?? true,
-        image_url: item.imageUrl || null
+        image_url: item.image || item.imageUrl || null
       })
       .select('id')
       .single();
@@ -185,7 +186,7 @@ export class DatabaseService {
         price: item.price,
         sub_category_id: item.subCategory ? parseInt(item.subCategory) : undefined,
         available: item.available,
-        image_url: item.imageUrl,
+        image_url: item.image || item.imageUrl,
         updated_at: new Date().toISOString()
       })
       .eq('id', parseInt(id));
@@ -212,7 +213,7 @@ export class DatabaseService {
       await supabase.from('categories').delete().neq('id', 0);
 
       // Добавляем исходные данные
-      const { data: category } = await supabase
+      const { data: category, error: categoryError } = await supabase
         .from('categories')
         .insert({
           name: 'Напитки',
@@ -222,7 +223,11 @@ export class DatabaseService {
         .select('id')
         .single();
 
-      const { data: subCategory } = await supabase
+      if (categoryError || !category) {
+        throw new Error('Ошибка при создании категории: ' + categoryError?.message);
+      }
+
+      const { data: subCategory, error: subCategoryError } = await supabase
         .from('sub_categories')
         .insert({
           name: 'Классические напитки',
@@ -231,6 +236,10 @@ export class DatabaseService {
         })
         .select('id')
         .single();
+
+      if (subCategoryError || !subCategory) {
+        throw new Error('Ошибка при создании подкатегории: ' + subCategoryError?.message);
+      }
 
       await supabase.from('items').insert([
         {
