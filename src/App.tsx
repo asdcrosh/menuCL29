@@ -32,7 +32,7 @@ const App: React.FC = () => {
         console.error('Ошибка при загрузке данных из базы:', err);
         // Fallback к локальным данным
         setData(menuData);
-        setError(null);
+        setError('База данных недоступна. Используются локальные данные.');
       } finally {
         setLoading(false);
       }
@@ -150,9 +150,10 @@ const App: React.FC = () => {
   if (error) {
     return (
       <div className="error-screen">
-        <h2>Ошибка загрузки</h2>
+        <h2>Режим только чтение</h2>
         <p>{error}</p>
-        <button onClick={() => window.location.reload()}>Попробовать снова</button>
+        <p>Админ-панель недоступна без настройки базы данных.</p>
+        <button onClick={() => window.location.reload()}>Обновить страницу</button>
       </div>
     );
   }

@@ -73,12 +73,20 @@ export class DatabaseService {
       };
     } catch (error) {
       console.error('Ошибка при загрузке данных из базы:', error);
-      throw error;
+      console.log('Используем fallback данные...');
+      
+      // Возвращаем локальные данные как fallback
+      return import('../data/menu.json').then(module => module.default);
     }
   }
 
   // Добавление категории
   static async addCategory(category: Omit<Category, 'id' | 'subCategories'>): Promise<number> {
+    // Проверяем, настроен ли Supabase
+    if (!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY) {
+      throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
+    }
+
     const { data, error } = await supabase
       .from('categories')
       .insert({
