@@ -1,0 +1,217 @@
+.subcategory-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(5px);
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+
+
+.subcategory-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 1.5rem 0;
+  padding: 1rem 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  position: relative;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subcategory-title::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 1.5rem;
+  width: 60px;
+  height: 2px;
+  background: var(--gradient-primary);
+  border-radius: 1px;
+  box-shadow: 0 1px 4px rgba(102, 126, 234, 0.2);
+}
+
+.subcategory-title::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -10px;
+  width: 3px;
+  height: 24px;
+  background: var(--gradient-primary);
+  border-radius: 1.5px;
+  transform: translateY(-50%);
+  opacity: 0.6;
+}
+
+[data-theme="dark"] .subcategory-title {
+  color: #ffffff;
+}
+
+/* Показ/скрытие версий */
+.desktop-view {
+  display: block;
+}
+
+.mobile-view {
+  display: none;
+}
+
+/* Десктоп подкатегории */
+.desktop-subcategory {
+  margin-bottom: 2rem;
+}
+
+.desktop-subcategory:last-child {
+  margin-bottom: 0;
+}
+
+.desktop-subcategory-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  position: relative;
+  display: inline-block;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+}
+
+.desktop-subcategory-title:hover {
+  transform: translateX(5px);
+  box-shadow: 0 3px 12px var(--shadow-color);
+}
+
+.desktop-subcategory-title::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 1.25rem;
+  width: 0px;
+  height: 2px;
+  background: var(--gradient-primary);
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+.desktop-subcategory-title:hover::after {
+  width: 90%;
+}
+
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .subcategory-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 10px;
+  }
+  
+  .subcategory-title {
+    display: none; /* Скрываем заголовок в мобильной версии */
+  }
+  
+  .desktop-view {
+    display: none;
+  }
+  
+  .mobile-view {
+    display: block;
+  }
+  
+  .desktop-subcategory {
+    margin-bottom: 1.5rem;
+  }
+  
+  .desktop-subcategory-title {
+    font-size: 1.1rem;
+    padding: 0.6rem 1rem;
+  }
+  
+  /* Улучшения для свайпа в мобильной версии */
+  .mobile-view .carousel-container {
+    touch-action: pan-y pinch-zoom;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+  
+  .mobile-view .carousel-wrapper {
+    touch-action: pan-y pinch-zoom;
+  }
+  
+  .mobile-view .carousel-track {
+    will-change: transform;
+  }
+  
+  /* Улучшенная обратная связь при свайпе */
+  .mobile-view .carousel-wrapper:active {
+    cursor: grabbing;
+  }
+  
+  .mobile-view .carousel-wrapper:active .carousel-track {
+    transition: none;
+  }
+  
+  /* Скрываем кнопки в мобильной версии для чистоты интерфейса */
+  .mobile-view .carousel-button {
+    display: none;
+  }
+  
+  /* Улучшаем точки навигации для touch */
+  .mobile-view .carousel-dots {
+    padding: 0.8rem;
+  }
+  
+  .mobile-view .carousel-dot {
+    width: 8px;
+    height: 8px;
+    margin: 0 0.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .subcategory-section {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+  }
+  
+  .subcategory-title {
+    display: none; /* Скрываем заголовок в мобильной версии */
+  }
+  
+  .desktop-subcategory-title {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  /* Дополнительные улучшения для очень маленьких экранов */
+  .mobile-view .carousel-dots {
+    padding: 0.6rem;
+  }
+  
+  .mobile-view .carousel-dot {
+    width: 6px;
+    height: 6px;
+    margin: 0 0.2rem;
+  }
+  
+  /* Увеличиваем область касания для лучшего UX */
+  .mobile-view .carousel-wrapper {
+    min-height: 200px;
+  }
+}

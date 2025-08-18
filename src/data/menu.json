@@ -1,0 +1,191 @@
+{
+  "restaurant": {
+    "name": "COFFEE LIKE",
+    "description": "Добро пожаловать в нашу уютную кофейню! Мы предлагаем свежий кофе, вкусные блюда и приятную атмосферу."
+  },
+  "categories": [
+    {
+      "id": "drinks",
+      "name": "Напитки",
+      "icon": "☕",
+      "subCategories": [
+        {
+          "id": "classic-drinks",
+          "name": "Классические напитки",
+          "categoryId": "drinks",
+          "items": [
+            {
+              "id": "americano",
+              "name": "Американо",
+              "description": "Классический эспрессо с горячей водой",
+              "price": 150,
+              "category": "drinks",
+              "subCategory": "classic-drinks",
+              "available": true
+            },
+            {
+              "id": "cappuccino",
+              "name": "Капучино",
+              "description": "Эспрессо с молочной пенкой",
+              "price": 180,
+              "category": "drinks",
+              "subCategory": "classic-drinks",
+              "available": true
+            },
+            {
+              "id": "latte",
+              "name": "Латте",
+              "description": "Эспрессо с молоком и молочной пенкой",
+              "price": 200,
+              "category": "drinks",
+              "subCategory": "classic-drinks",
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "signature-drinks",
+          "name": "Фирменные напитки",
+          "categoryId": "drinks",
+          "items": [
+            {
+              "id": "caramel-macchiato",
+              "name": "Карамельный маккиато",
+              "description": "Эспрессо с карамельным сиропом и молоком",
+              "price": 220,
+              "category": "drinks",
+              "subCategory": "signature-drinks",
+              "available": true
+            },
+            {
+              "id": "mocha",
+              "name": "Мокко",
+              "description": "Эспрессо с шоколадом и молоком",
+              "price": 240,
+              "category": "drinks",
+              "subCategory": "signature-drinks",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "soups-salads",
+      "name": "Супы и салаты",
+      "icon": "🥗",
+      "subCategories": [
+        {
+          "id": "soups",
+          "name": "Супы",
+          "categoryId": "soups-salads",
+          "items": [
+            {
+              "id": "tomato-soup",
+              "name": "Томатный суп",
+              "description": "Классический томатный суп с базиликом",
+              "price": 280,
+              "category": "soups-salads",
+              "subCategory": "soups",
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "salads",
+          "name": "Салаты",
+          "categoryId": "soups-salads",
+          "items": [
+            {
+              "id": "caesar-salad",
+              "name": "Салат Цезарь",
+              "description": "Салат с курицей, сыром и соусом Цезарь",
+              "price": 320,
+              "category": "soups-salads",
+              "subCategory": "salads",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches",
+      "name": "Брускетты и сэндвичи",
+      "icon": "🥪",
+      "subCategories": [
+        {
+          "id": "bruschettas",
+          "name": "Брускетты",
+          "categoryId": "sandwiches",
+          "items": [
+            {
+              "id": "tomato-bruschetta",
+              "name": "Брускетта с томатами",
+              "description": "Поджаренный хлеб с томатами, базиликом и моцареллой",
+              "price": 220,
+              "category": "sandwiches",
+              "subCategory": "bruschettas",
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "sandwiches",
+          "name": "Сэндвичи",
+          "categoryId": "sandwiches",
+          "items": [
+            {
+              "id": "chicken-sandwich",
+              "name": "Куриный сэндвич",
+              "description": "Сэндвич с куриной грудкой, овощами и соусом",
+              "price": 280,
+              "category": "sandwiches",
+              "subCategory": "sandwiches",
+              "available": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "desserts",
+      "name": "Десерты",
+      "icon": "🍰",
+      "subCategories": [
+        {
+          "id": "cakes",
+          "name": "Торты",
+          "categoryId": "desserts",
+          "items": [
+            {
+              "id": "chocolate-cake",
+              "name": "Шоколадный торт",
+              "description": "Нежный шоколадный торт с шоколадным кремом",
+              "price": 180,
+              "category": "desserts",
+              "subCategory": "cakes",
+              "available": true
+            }
+          ]
+        },
+        {
+          "id": "pastries",
+          "name": "Выпечка",
+          "categoryId": "desserts",
+          "items": [
+            {
+              "id": "croissant",
+              "name": "Круассан",
+              "description": "Классический французский круассан",
+              "price": 120,
+              "category": "desserts",
+              "subCategory": "pastries",
+              "available": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
