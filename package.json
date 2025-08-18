@@ -2,7 +2,6 @@
   "name": "coffee-menu",
   "version": "1.0.0",
   "description": "Digital menu for coffee shop with QR code access",
-  "homepage": "https://asdcrosh.github.io/menuCL29",
   "main": "index.js",
   "scripts": {
     "start": "react-scripts start",
