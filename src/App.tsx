@@ -7,7 +7,7 @@ import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import AdminButton from './components/AdminButton';
 import { MenuData, Category } from './types/menu';
-import { ApiService } from './services/api';
+import { DatabaseService } from './services/database';
 import menuData from './data/menu.json';
 import './App.css';
 
@@ -20,18 +20,19 @@ const App: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  // Загружаем данные из API при загрузке приложения
+  // Загружаем данные из базы данных при загрузке приложения
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const data = await ApiService.getMenu();
+        const data = await DatabaseService.getMenuData();
         setData(data);
         setError(null);
       } catch (err) {
-        console.error('Ошибка при загрузке данных:', err);
-        setError('Не удалось загрузить данные меню');
+        console.error('Ошибка при загрузке данных из базы:', err);
+        // Fallback к локальным данным
         setData(menuData);
+        setError(null);
       } finally {
         setLoading(false);
       }
@@ -81,8 +82,12 @@ const App: React.FC = () => {
 
   const handleUpdateData = async (newData: MenuData, action?: string, itemName?: string) => {
     try {
-      await ApiService.updateMenu(newData, action, itemName);
+      // Обновляем локальное состояние
       setData(newData);
+      
+      // Здесь можно добавить логику для сохранения в базу данных
+      // Пока что просто обновляем локальное состояние
+      console.log('Данные обновлены:', action, itemName);
     } catch (err) {
       console.error('Ошибка при сохранении данных:', err);
       alert('Ошибка при сохранении данных. Попробуйте еще раз.');
@@ -91,8 +96,8 @@ const App: React.FC = () => {
 
   const handleResetData = async () => {
     try {
-      await ApiService.resetMenu();
-      const resetData = await ApiService.getMenu();
+      await DatabaseService.resetToInitialData();
+      const resetData = await DatabaseService.getMenuData();
       setData(resetData);
     } catch (err) {
       console.error('Ошибка при сбросе данных:', err);

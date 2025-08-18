@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MenuData, Category, MenuItem, SubCategory } from '../types/menu';
+import { DatabaseService } from '../services/database';
 import './AdminPanel.css';
 
 interface AdminPanelProps {
@@ -292,134 +293,215 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
     editingSubCategory: !!editingSubCategory
   }); // Отладка
 
-  const handleAddItem = (itemData: Omit<MenuItem, 'id'>) => {
+  const handleAddItem = async (itemData: Omit<MenuItem, 'id'>) => {
     console.log('handleAddItem called:', itemData); // Отладка
-    const newItem: MenuItem = {
-      ...itemData,
-      id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`.replace(/[^a-z0-9-]/g, ''),
-      available: true
-    };
+    try {
+      // Добавляем в базу данных
+      const itemId = await DatabaseService.addItem(itemData);
+      
+      // Обновляем локальное состояние
+      const newItem: MenuItem = {
+        ...itemData,
+        id: itemId.toString(),
+        available: true
+      };
 
-    const updatedData = { ...data };
-    const category = updatedData.categories.find(cat => cat.id === newItem.category);
-    if (category) {
-      const subCategory = category.subCategories.find(sub => sub.id === newItem.subCategory);
-      if (subCategory) {
-        subCategory.items.push(newItem);
-        onUpdateData(updatedData);
-        setShowAddItem(false);
-      }
-    }
-  };
-
-  const handleUpdateItem = (updatedItem: MenuItem) => {
-    console.log('handleUpdateItem called:', updatedItem); // Отладка
-    const updatedData = { ...data };
-    
-    // Удаляем из старой подкатегории
-    updatedData.categories.forEach(category => {
-      category.subCategories.forEach(subCategory => {
-        subCategory.items = subCategory.items.filter(item => item.id !== updatedItem.id);
-      });
-    });
-
-    // Добавляем в новую подкатегорию
-    const category = updatedData.categories.find(cat => cat.id === updatedItem.category);
-    if (category) {
-      const subCategory = category.subCategories.find(sub => sub.id === updatedItem.subCategory);
-      if (subCategory) {
-        subCategory.items.push(updatedItem);
-      }
-    }
-
-    onUpdateData(updatedData);
-    setEditingItem(null);
-  };
-
-  const handleDeleteItem = (itemId: string, categoryId: string, subCategoryId: string) => {
-    if (window.confirm('Вы уверены, что хотите удалить это блюдо?')) {
       const updatedData = { ...data };
-      const category = updatedData.categories.find(cat => cat.id === categoryId);
+      const category = updatedData.categories.find(cat => cat.id === newItem.category);
       if (category) {
-        const subCategory = category.subCategories.find(sub => sub.id === subCategoryId);
+        const subCategory = category.subCategories.find(sub => sub.id === newItem.subCategory);
         if (subCategory) {
-          subCategory.items = subCategory.items.filter(item => item.id !== itemId);
+          subCategory.items.push(newItem);
           onUpdateData(updatedData);
+          setShowAddItem(false);
         }
       }
+    } catch (error) {
+      console.error('Ошибка при добавлении блюда:', error);
+      alert('Ошибка при добавлении блюда. Проверьте подключение к базе данных.');
     }
   };
 
-  const handleAddCategory = (categoryData: Omit<Category, 'id' | 'subCategories'>) => {
-    console.log('handleAddCategory called:', categoryData); // Отладка
-    const newCategory: Category = {
-      ...categoryData,
-      id: `category-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`.replace(/[^a-z0-9-]/g, ''),
-      subCategories: []
-    };
-
-    const updatedData = { ...data };
-    updatedData.categories.push(newCategory);
-    onUpdateData(updatedData, 'add', categoryData.name);
-    setShowAddCategory(false);
-  };
-
-  const handleUpdateCategory = (updatedCategory: Category) => {
-    console.log('handleUpdateCategory called:', updatedCategory); // Отладка
-    const updatedData = { ...data };
-    const index = updatedData.categories.findIndex(cat => cat.id === updatedCategory.id);
-    if (index !== -1) {
-      updatedData.categories[index] = updatedCategory;
-      onUpdateData(updatedData);
-    }
-    setEditingCategory(null);
-  };
-
-  const handleDeleteCategory = (categoryId: string) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту категорию? Все блюда в ней также будут удалены.')) {
+  const handleUpdateItem = async (updatedItem: MenuItem) => {
+    console.log('handleUpdateItem called:', updatedItem); // Отладка
+    try {
+      // Обновляем в базе данных
+      await DatabaseService.updateItem(updatedItem.id, updatedItem);
+      
+      // Обновляем локальное состояние
       const updatedData = { ...data };
-      updatedData.categories = updatedData.categories.filter(cat => cat.id !== categoryId);
-      onUpdateData(updatedData);
-    }
-  };
+      
+      // Удаляем из старой подкатегории
+      updatedData.categories.forEach(category => {
+        category.subCategories.forEach(subCategory => {
+          subCategory.items = subCategory.items.filter(item => item.id !== updatedItem.id);
+        });
+      });
 
-  const handleAddSubCategory = (subCategoryData: Omit<SubCategory, 'id'>) => {
-    console.log('handleAddSubCategory called:', subCategoryData); // Отладка
-    const newSubCategory: SubCategory = {
-      ...subCategoryData,
-      id: `subcategory-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`.replace(/[^a-z0-9-]/g, ''),
-      items: []
-    };
-
-    const updatedData = { ...data };
-    const category = updatedData.categories.find(cat => cat.id === selectedCategory);
-    if (category) {
-      category.subCategories.push(newSubCategory);
-      onUpdateData(updatedData);
-      setShowAddSubCategory(false);
-    }
-  };
-
-  const handleUpdateSubCategory = (updatedSubCategory: SubCategory) => {
-    console.log('handleUpdateSubCategory called:', updatedSubCategory); // Отладка
-    const updatedData = { ...data };
-    updatedData.categories.forEach(category => {
-      const index = category.subCategories.findIndex(sub => sub.id === updatedSubCategory.id);
-      if (index !== -1) {
-        category.subCategories[index] = updatedSubCategory;
+      // Добавляем в новую подкатегорию
+      const category = updatedData.categories.find(cat => cat.id === updatedItem.category);
+      if (category) {
+        const subCategory = category.subCategories.find(sub => sub.id === updatedItem.subCategory);
+        if (subCategory) {
+          subCategory.items.push(updatedItem);
+        }
       }
-    });
-    onUpdateData(updatedData);
-    setEditingSubCategory(null);
+
+      onUpdateData(updatedData);
+      setEditingItem(null);
+    } catch (error) {
+      console.error('Ошибка при обновлении блюда:', error);
+      alert('Ошибка при обновлении блюда. Проверьте подключение к базе данных.');
+    }
   };
 
-  const handleDeleteSubCategory = (subCategoryId: string) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту подкатегорию? Все блюда в ней также будут удалены.')) {
+  const handleDeleteItem = async (itemId: string, categoryId: string, subCategoryId: string) => {
+    if (window.confirm('Вы уверены, что хотите удалить это блюдо?')) {
+      try {
+        // Удаляем из базы данных
+        await DatabaseService.deleteItem(itemId);
+        
+        // Обновляем локальное состояние
+        const updatedData = { ...data };
+        const category = updatedData.categories.find(cat => cat.id === categoryId);
+        if (category) {
+          const subCategory = category.subCategories.find(sub => sub.id === subCategoryId);
+          if (subCategory) {
+            subCategory.items = subCategory.items.filter(item => item.id !== itemId);
+            onUpdateData(updatedData);
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка при удалении блюда:', error);
+        alert('Ошибка при удалении блюда. Проверьте подключение к базе данных.');
+      }
+    }
+  };
+
+  const handleAddCategory = async (categoryData: Omit<Category, 'id' | 'subCategories'>) => {
+    console.log('handleAddCategory called:', categoryData); // Отладка
+    try {
+      // Добавляем в базу данных
+      const categoryId = await DatabaseService.addCategory(categoryData);
+      
+      // Обновляем локальное состояние
+      const newCategory: Category = {
+        ...categoryData,
+        id: categoryId.toString(),
+        subCategories: []
+      };
+
+      const updatedData = { ...data };
+      updatedData.categories.push(newCategory);
+      onUpdateData(updatedData, 'add', categoryData.name);
+      setShowAddCategory(false);
+    } catch (error) {
+      console.error('Ошибка при добавлении категории:', error);
+      alert('Ошибка при добавлении категории. Проверьте подключение к базе данных.');
+    }
+  };
+
+  const handleUpdateCategory = async (updatedCategory: Category) => {
+    console.log('handleUpdateCategory called:', updatedCategory); // Отладка
+    try {
+      // Обновляем в базе данных
+      await DatabaseService.updateCategory(updatedCategory.id, updatedCategory);
+      
+      // Обновляем локальное состояние
+      const updatedData = { ...data };
+      const index = updatedData.categories.findIndex(cat => cat.id === updatedCategory.id);
+      if (index !== -1) {
+        updatedData.categories[index] = updatedCategory;
+        onUpdateData(updatedData);
+      }
+      setEditingCategory(null);
+    } catch (error) {
+      console.error('Ошибка при обновлении категории:', error);
+      alert('Ошибка при обновлении категории. Проверьте подключение к базе данных.');
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (window.confirm('Вы уверены, что хотите удалить эту категорию? Все блюда в ней также будут удалены.')) {
+      try {
+        // Удаляем из базы данных
+        await DatabaseService.deleteCategory(categoryId);
+        
+        // Обновляем локальное состояние
+        const updatedData = { ...data };
+        updatedData.categories = updatedData.categories.filter(cat => cat.id !== categoryId);
+        onUpdateData(updatedData);
+      } catch (error) {
+        console.error('Ошибка при удалении категории:', error);
+        alert('Ошибка при удалении категории. Проверьте подключение к базе данных.');
+      }
+    }
+  };
+
+  const handleAddSubCategory = async (subCategoryData: Omit<SubCategory, 'id'>) => {
+    console.log('handleAddSubCategory called:', subCategoryData); // Отладка
+    try {
+      // Добавляем в базу данных
+      const subCategoryId = await DatabaseService.addSubCategory(subCategoryData);
+      
+      // Обновляем локальное состояние
+      const newSubCategory: SubCategory = {
+        ...subCategoryData,
+        id: subCategoryId.toString(),
+        items: []
+      };
+
+      const updatedData = { ...data };
+      const category = updatedData.categories.find(cat => cat.id === selectedCategory);
+      if (category) {
+        category.subCategories.push(newSubCategory);
+        onUpdateData(updatedData);
+        setShowAddSubCategory(false);
+      }
+    } catch (error) {
+      console.error('Ошибка при добавлении подкатегории:', error);
+      alert('Ошибка при добавлении подкатегории. Проверьте подключение к базе данных.');
+    }
+  };
+
+  const handleUpdateSubCategory = async (updatedSubCategory: SubCategory) => {
+    console.log('handleUpdateSubCategory called:', updatedSubCategory); // Отладка
+    try {
+      // Обновляем в базе данных
+      await DatabaseService.updateSubCategory(updatedSubCategory.id, updatedSubCategory);
+      
+      // Обновляем локальное состояние
       const updatedData = { ...data };
       updatedData.categories.forEach(category => {
-        category.subCategories = category.subCategories.filter(sub => sub.id !== subCategoryId);
+        const index = category.subCategories.findIndex(sub => sub.id === updatedSubCategory.id);
+        if (index !== -1) {
+          category.subCategories[index] = updatedSubCategory;
+        }
       });
       onUpdateData(updatedData);
+      setEditingSubCategory(null);
+    } catch (error) {
+      console.error('Ошибка при обновлении подкатегории:', error);
+      alert('Ошибка при обновлении подкатегории. Проверьте подключение к базе данных.');
+    }
+  };
+
+  const handleDeleteSubCategory = async (subCategoryId: string) => {
+    if (window.confirm('Вы уверены, что хотите удалить эту подкатегорию? Все блюда в ней также будут удалены.')) {
+      try {
+        // Удаляем из базы данных
+        await DatabaseService.deleteSubCategory(subCategoryId);
+        
+        // Обновляем локальное состояние
+        const updatedData = { ...data };
+        updatedData.categories.forEach(category => {
+          category.subCategories = category.subCategories.filter(sub => sub.id !== subCategoryId);
+        });
+        onUpdateData(updatedData);
+      } catch (error) {
+        console.error('Ошибка при удалении подкатегории:', error);
+        alert('Ошибка при удалении подкатегории. Проверьте подключение к базе данных.');
+      }
     }
   };
 
