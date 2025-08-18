@@ -1,0 +1,40 @@
+{
+  "restaurant": {
+    "name": "COFFEE LIKE",
+    "description": "Добро пожаловать в нашу уютную кофейню! Мы предлагаем свежий кофе, вкусные блюда и приятную атмосферу."
+  },
+  "categories": [
+    {
+      "id": "drinks",
+      "name": "Напитки",
+      "icon": "☕",
+      "subCategories": [
+        {
+          "id": "classic-drinks",
+          "name": "Классические напитки",
+          "categoryId": "drinks",
+          "items": [
+            {
+              "id": "americano",
+              "name": "Американо",
+              "description": "Классический эспрессо с горячей водой",
+              "price": 150,
+              "category": "drinks",
+              "subCategory": "classic-drinks",
+              "available": true
+            },
+            {
+              "id": "cappuccino",
+              "name": "Капучино",
+              "description": "Эспрессо с молочной пенкой",
+              "price": 180,
+              "category": "drinks",
+              "subCategory": "classic-drinks",
+              "available": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

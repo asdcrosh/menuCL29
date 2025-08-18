@@ -7,34 +7,39 @@ import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import AdminButton from './components/AdminButton';
 import { MenuData, Category } from './types/menu';
+import { ApiService } from './services/api';
 import menuData from './data/menu.json';
 import './App.css';
 
 const App: React.FC = () => {
-  // Загружаем данные из localStorage или используем данные по умолчанию
-  const getInitialData = (): MenuData => {
-    const savedData = localStorage.getItem('menuData');
-    if (savedData) {
-      try {
-        return JSON.parse(savedData);
-      } catch (error) {
-        console.error('Ошибка при загрузке данных из localStorage:', error);
-        return menuData;
-      }
-    }
-    return menuData;
-  };
-
-  const [data, setData] = useState<MenuData>(getInitialData);
+  const [data, setData] = useState<MenuData>(menuData);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  // Сохраняем данные в localStorage при каждом изменении
+  // Загружаем данные из API при загрузке приложения
   useEffect(() => {
-    localStorage.setItem('menuData', JSON.stringify(data));
-  }, [data]);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const menuData = await ApiService.getMenu();
+        setData(menuData);
+        setError(null);
+      } catch (err) {
+        console.error('Ошибка при загрузке данных:', err);
+        setError('Не удалось загрузить данные меню');
+        // Используем данные по умолчанию при ошибке
+        setData(menuData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   useEffect(() => {
     // Устанавливаем первую категорию как активную при загрузке
@@ -75,13 +80,25 @@ const App: React.FC = () => {
     setLoginError('');
   };
 
-  const handleUpdateData = (newData: MenuData) => {
-    setData(newData);
+  const handleUpdateData = async (newData: MenuData) => {
+    try {
+      await ApiService.updateMenu(newData);
+      setData(newData);
+    } catch (err) {
+      console.error('Ошибка при сохранении данных:', err);
+      alert('Ошибка при сохранении данных. Попробуйте еще раз.');
+    }
   };
 
-  const handleResetData = () => {
-    setData(menuData);
-    localStorage.removeItem('menuData');
+  const handleResetData = async () => {
+    try {
+      await ApiService.resetMenu();
+      const resetData = await ApiService.getMenu();
+      setData(resetData);
+    } catch (err) {
+      console.error('Ошибка при сбросе данных:', err);
+      alert('Ошибка при сбросе данных. Попробуйте еще раз.');
+    }
   };
 
   const handleLogoClick = () => {
@@ -112,6 +129,27 @@ const App: React.FC = () => {
         onCancel={() => setShowLogin(false)}
         error={loginError}
       />
+    );
+  }
+
+  // Показываем загрузку
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <p>Загрузка меню...</p>
+      </div>
+    );
+  }
+
+  // Показываем ошибку
+  if (error) {
+    return (
+      <div className="error-screen">
+        <h2>Ошибка загрузки</h2>
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Попробовать снова</button>
+      </div>
     );
   }
 
