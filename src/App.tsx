@@ -6,9 +6,11 @@ import SubCategorySection from './components/SubCategorySection';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import AdminButton from './components/AdminButton';
+import EnvironmentStatus from './components/EnvironmentStatus';
 import { MenuData, Category } from './types/menu';
 import { DatabaseService } from './services/database';
 import menuData from './data/menu.json';
+import { debugEnvironment } from './utils/debug';
 import './App.css';
 
 const App: React.FC = () => {
@@ -19,9 +21,13 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [showEnvStatus, setShowEnvStatus] = useState(false);
 
   // Загружаем данные из базы данных при загрузке приложения
   useEffect(() => {
+    // Отладочная информация о переменных окружения
+    debugEnvironment();
+
     const loadData = async () => {
       try {
         setLoading(true);
@@ -184,6 +190,18 @@ const App: React.FC = () => {
           </div>
         </div>
         <AdminButton onLogin={handleShowLogin} />
+        
+        {/* Кнопка для показа статуса переменных окружения */}
+        <button 
+          onClick={() => setShowEnvStatus(!showEnvStatus)}
+          className="env-status-toggle"
+          title="Показать статус переменных окружения"
+        >
+          🔍 Статус ENV
+        </button>
+        
+        {/* Компонент статуса переменных окружения */}
+        <EnvironmentStatus isVisible={showEnvStatus} />
       </div>
     </ThemeProvider>
   );
