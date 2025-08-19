@@ -14,6 +14,7 @@ export interface SubCategory {
   id: string;
   name: string;
   categoryId: string;
+  orderIndex?: number; // Для совместимости с базой данных
   items: MenuItem[];
 }
 

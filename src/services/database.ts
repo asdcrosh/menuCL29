@@ -16,7 +16,7 @@ class DatabaseService {
     if (!this.cache.menuData || !this.cache.lastFetch) {
       return false;
     }
-    return Date.now() - this.cache.lastFetch < this.cacheTimeout;
+    return Date.now() - this.cache.lastFetch < this.cache.cacheTimeout;
   }
 
   private static updateCache(data: MenuData): void {
@@ -78,6 +78,7 @@ class DatabaseService {
             id: sub.id.toString(),
             name: sub.name,
             categoryId: sub.category_id.toString(),
+            orderIndex: sub.order_index,
             items: itemsData
               .filter(item => item.sub_category_id === sub.id)
               .map(item => ({
@@ -119,7 +120,7 @@ class DatabaseService {
       .insert({
         name: category.name,
         icon: category.icon,
-        order_index: 0
+        order_index: category.orderIndex || 0
       })
       .select('id')
       .single();
@@ -189,7 +190,7 @@ class DatabaseService {
       .insert({
         name: subCategory.name,
         category_id: parseInt(subCategory.categoryId),
-        order_index: 0
+        order_index: subCategory.orderIndex || 0
       })
       .select('id')
       .single();
