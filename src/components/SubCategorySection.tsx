@@ -35,7 +35,7 @@ const SubCategorySection: React.FC<SubCategorySectionProps> = ({ subCategories, 
           activeSubCategory={activeSubCategory}
           onSubCategoryChange={setActiveSubCategory}
         />
-        <MenuCarousel items={currentSubCategory.items} />
+        <MenuGrid items={currentSubCategory.items} title={currentSubCategory.name} />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MenuItem as MenuItemType } from '../types/menu';
 import MenuItem from './MenuItem';
+import MenuGrid from './MenuGrid';
 import './MenuCarousel.css';
 
 interface MenuCarouselProps {
@@ -88,6 +89,11 @@ const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
 
   if (items.length === 0) {
     return null;
+  }
+
+  // На мобильных устройствах показываем сетку вместо карусели
+  if (isMobile) {
+    return <MenuGrid items={items} title={title} />;
   }
 
   return (
