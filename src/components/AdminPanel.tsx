@@ -8,7 +8,6 @@ interface AdminPanelProps {
   onUpdateData: (data: MenuData, action?: string, itemName?: string) => void;
   onLogout: () => void;
   onLogoClick?: () => void;
-  onResetData?: () => void;
 }
 
 interface ModalProps {
@@ -274,7 +273,7 @@ const ItemForm: React.FC<{
   );
 };
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, onLogoClick, onResetData }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, onLogoClick }) => {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingSubCategory, setEditingSubCategory] = useState<SubCategory | null>(null);

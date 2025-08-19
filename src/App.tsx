@@ -98,16 +98,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleResetData = async () => {
-    try {
-      await DatabaseService.resetToInitialData();
-      const resetData = await DatabaseService.getMenuData();
-      setData(resetData);
-    } catch (err) {
-      console.error('Ошибка при сбросе данных:', err);
-      alert('Ошибка при сбросе данных. Попробуйте еще раз.');
-    }
-  };
+
 
   const handleLogoClick = () => {
     // Переход на главную страницу (первая категория)
@@ -124,7 +115,6 @@ const App: React.FC = () => {
         onUpdateData={handleUpdateData}
         onLogout={handleLogout}
         onLogoClick={handleLogoClick}
-        onResetData={handleResetData}
       />
     );
   }
