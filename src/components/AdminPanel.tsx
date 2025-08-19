@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { MenuData, Category, MenuItem, SubCategory } from '../types/menu';
 import { DatabaseService } from '../services/database';
 import { FileUploadService } from '../services/fileUpload';
+import EmojiPicker from './EmojiPicker';
 import './AdminPanel.css';
 
 interface AdminPanelProps {
@@ -68,14 +69,11 @@ const CategoryForm: React.FC<{
         />
       </div>
       <div className="form-group">
-        <label htmlFor="categoryIcon">Иконка (эмодзи)</label>
-        <input
-          id="categoryIcon"
-          type="text"
-          value={icon}
-          onChange={(e) => setIcon(e.target.value)}
-          placeholder="☕"
-          required
+        <label>Иконка (эмодзи)</label>
+        <EmojiPicker
+          categoryName={name}
+          selectedEmoji={icon}
+          onEmojiSelect={setIcon}
         />
       </div>
       <div className="form-actions">
