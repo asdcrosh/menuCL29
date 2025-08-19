@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { MenuData, Category, MenuItem, SubCategory } from '../types/menu';
 import { DatabaseService } from '../services/database';
+import { FileUploadService } from '../services/fileUpload';
 import './AdminPanel.css';
 
 interface AdminPanelProps {
@@ -161,9 +162,47 @@ const ItemForm: React.FC<{
   const [categoryId, setCategoryId] = useState(item?.category || categories[0]?.id || '');
   const [subCategoryId, setSubCategoryId] = useState(item?.subCategory || '');
   const [available, setAvailable] = useState(item?.available ?? true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedCategory = categories.find(cat => cat.id === categoryId);
   const subCategories = selectedCategory?.subCategories || [];
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadProgress('Загрузка изображения...');
+
+    try {
+      const result = await FileUploadService.uploadImage(file);
+      setImage(result.url);
+      setUploadProgress('Изображение успешно загружено!');
+      
+      // Очищаем сообщение через 2 секунды
+      setTimeout(() => {
+        setUploadProgress('');
+      }, 2000);
+    } catch (error) {
+      console.error('Ошибка при загрузке изображения:', error);
+      setUploadProgress(`Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+      
+      // Очищаем сообщение об ошибке через 3 секунды
+      setTimeout(() => {
+        setUploadProgress('');
+      }, 3000);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,14 +257,54 @@ const ItemForm: React.FC<{
         />
       </div>
       <div className="form-group">
-        <label htmlFor="itemImage">URL изображения</label>
-        <input
-          id="itemImage"
-          type="url"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-          placeholder="https://example.com/image.jpg"
-        />
+        <label htmlFor="itemImage">Изображение блюда</label>
+        <div className="image-upload-container">
+          <input
+            ref={fileInputRef}
+            id="itemImage"
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="file-input"
+            disabled={isUploading}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="upload-button"
+            disabled={isUploading}
+          >
+            {isUploading ? 'Загрузка...' : 'Выбрать изображение'}
+          </button>
+          {uploadProgress && (
+            <div className={`upload-progress ${uploadProgress.includes('Ошибка') ? 'error' : 'success'}`}>
+              {uploadProgress}
+            </div>
+          )}
+          {image && (
+            <div className="current-image">
+              <img src={image} alt="Текущее изображение" className="preview-image" />
+              <button
+                type="button"
+                onClick={() => setImage('')}
+                className="remove-image-btn"
+                title="Удалить изображение"
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="image-url-input">
+          <label htmlFor="itemImageUrl">Или введите URL изображения</label>
+          <input
+            id="itemImageUrl"
+            type="url"
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            placeholder="https://example.com/image.jpg"
+          />
+        </div>
       </div>
       <div className="form-group">
         <label htmlFor="itemCategory">Категория</label>
