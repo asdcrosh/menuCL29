@@ -1,16 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { LoginCredentials } from '../types/menu';
+import { AuthService } from '../services/auth';
 import './Login.css';
 
 interface LoginProps {
-  onLogin: (username: string, password: string) => void;
+  onLogin: (user: any) => void;
   onCancel?: () => void;
+  onShowRegister: () => void;
   error?: string;
 }
 
-const Login: React.FC<LoginProps> = React.memo(({ onLogin, onCancel, error }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+const Login: React.FC<LoginProps> = React.memo(({ onLogin, onCancel, onShowRegister, error: externalError }) => {
+  const [credentials, setCredentials] = useState<LoginCredentials>({
+    username: '',
+    password: ''
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -20,23 +26,46 @@ const Login: React.FC<LoginProps> = React.memo(({ onLogin, onCancel, error }) =>
     }
   }, []);
 
+  useEffect(() => {
+    if (externalError) {
+      setError(externalError);
+    }
+  }, [externalError]);
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) return;
+    if (!credentials.username.trim() || !credentials.password.trim()) {
+      setError('Заполните все поля');
+      return;
+    }
     
     setIsLoading(true);
-    
-    setTimeout(() => {
-      onLogin(username, password);
-      setIsLoading(false);
-    }, 500);
-  }, [username, password, onLogin]);
+    setError('');
 
-  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isLoading) {
-      handleSubmit(e as any);
+    try {
+      const user = await AuthService.loginUser(credentials);
+      localStorage.setItem('adminUserId', user.id);
+      localStorage.setItem('adminLoginTime', Date.now().toString());
+      onLogin(user);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка при входе');
+    } finally {
+      setIsLoading(false);
     }
-  }, [handleSubmit, isLoading]);
+  }, [credentials, onLogin]);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setError('');
+  }, []);
+
+  const handlePasswordToggle = useCallback(() => {
+    setShowPassword(!showPassword);
+  }, [showPassword]);
 
   const handleCancel = useCallback(() => {
     if (onCancel) {
@@ -44,17 +73,9 @@ const Login: React.FC<LoginProps> = React.memo(({ onLogin, onCancel, error }) =>
     }
   }, [onCancel]);
 
-  const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsername(e.target.value);
-  }, []);
-
-  const handlePasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-  }, []);
-
-  const handlePasswordToggle = useCallback(() => {
-    setShowPassword(!showPassword);
-  }, [showPassword]);
+  const handleShowRegister = useCallback(() => {
+    onShowRegister();
+  }, [onShowRegister]);
 
   const handleContainerClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -76,9 +97,9 @@ const Login: React.FC<LoginProps> = React.memo(({ onLogin, onCancel, error }) =>
             <input
               type="text"
               id="username"
-              value={username}
-              onChange={handleUsernameChange}
-              onKeyPress={handleKeyPress}
+              name="username"
+              value={credentials.username}
+              onChange={handleInputChange}
               required
               placeholder="Введите имя пользователя"
               disabled={isLoading}
@@ -94,9 +115,9 @@ const Login: React.FC<LoginProps> = React.memo(({ onLogin, onCancel, error }) =>
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
-                value={password}
-                onChange={handlePasswordChange}
-                onKeyPress={handleKeyPress}
+                name="password"
+                value={credentials.password}
+                onChange={handleInputChange}
                 required
                 placeholder="Введите пароль"
                 disabled={isLoading}
@@ -123,7 +144,7 @@ const Login: React.FC<LoginProps> = React.memo(({ onLogin, onCancel, error }) =>
             <button
               type="submit"
               className="login-button"
-              disabled={isLoading || !username.trim() || !password.trim()}
+              disabled={isLoading || !credentials.username.trim() || !credentials.password.trim()}
             >
               {isLoading ? (
                 <>
@@ -148,10 +169,16 @@ const Login: React.FC<LoginProps> = React.memo(({ onLogin, onCancel, error }) =>
           </div>
         </form>
         
-        <div className="login-hint">
-          <p>
-            <strong>Подсказка:</strong> Используйте стандартные данные для входа
-          </p>
+        <div className="login-footer">
+          <p>Нет аккаунта?</p>
+          <button
+            type="button"
+            onClick={handleShowRegister}
+            className="register-link"
+            disabled={isLoading}
+          >
+            Зарегистрироваться
+          </button>
         </div>
       </div>
     </div>

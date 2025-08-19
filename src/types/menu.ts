@@ -35,3 +35,34 @@ export interface MenuData {
   restaurant: Restaurant;
   categories: Category[];
 }
+
+// Типы для аутентификации
+export interface AdminUser {
+  id: string;
+  username: string;
+  email?: string;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface AccessCode {
+  id: string;
+  code: string;
+  isUsed: boolean;
+  usedBy?: string;
+  usedAt?: string;
+  createdAt: string;
+}
+
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface RegistrationData {
+  accessCode: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+  email?: string;
+}

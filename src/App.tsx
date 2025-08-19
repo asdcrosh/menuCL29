@@ -4,10 +4,11 @@ import Header from './components/Header';
 import CategoryTabs from './components/CategoryTabs';
 import SubCategorySection from './components/SubCategorySection';
 import Login from './components/Login';
-import AdminPanel from './components/AdminPanel';
+import Register from './components/Register';
 import AdminButton from './components/AdminButton';
-import { MenuData, Category } from './types/menu';
+import { MenuData, Category, AdminUser } from './types/menu';
 import { DatabaseService } from './services/database';
+import { AuthService } from './services/auth';
 import menuData from './data/menu.json';
 
 import './App.css';
@@ -17,26 +18,9 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('');
-  const [isAdmin, setIsAdmin] = useState(() => {
-    const savedAdminState = localStorage.getItem('isAdmin');
-    const savedLoginTime = localStorage.getItem('adminLoginTime');
-    
-    if (savedAdminState === 'true' && savedLoginTime) {
-      const timeSinceLogin = Date.now() - parseInt(savedLoginTime);
-      const sessionTimeout = 8 * 60 * 60 * 1000;
-      
-      if (timeSinceLogin < sessionTimeout) {
-        return true;
-      } else {
-        localStorage.removeItem('isAdmin');
-        localStorage.removeItem('adminLoginTime');
-        return false;
-      }
-    }
-    
-    return false;
-  });
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const [loginError, setLoginError] = useState('');
 
   const loadData = useCallback(async () => {
@@ -53,9 +37,19 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const checkAuth = useCallback(async () => {
+    try {
+      const user = await AuthService.getCurrentUser();
+      setCurrentUser(user);
+    } catch (err) {
+      setCurrentUser(null);
+    }
+  }, []);
+
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    checkAuth();
+  }, [loadData, checkAuth]);
 
   useEffect(() => {
     if (data.categories.length > 0 && !activeCategory) {
@@ -74,26 +68,41 @@ const App: React.FC = () => {
     return data.categories.find(cat => cat.id === activeCategory) || null;
   }, [data.categories, activeCategory]);
 
-  const handleLogin = useCallback((username: string, password: string) => {
-    if (username === 'admin' && password === 'password') {
-      setIsAdmin(true);
-      localStorage.setItem('isAdmin', 'true');
-      localStorage.setItem('adminLoginTime', Date.now().toString());
-      setShowLogin(false);
-      setLoginError('');
-    } else {
-      setLoginError('Неверное имя пользователя или пароль');
-    }
+  const handleLogin = useCallback((user: AdminUser) => {
+    setCurrentUser(user);
+    setShowLogin(false);
+    setLoginError('');
   }, []);
 
-  const handleLogout = useCallback(() => {
-    setIsAdmin(false);
-    localStorage.removeItem('isAdmin');
-    localStorage.removeItem('adminLoginTime');
+  const handleRegisterSuccess = useCallback(() => {
+    setShowRegister(false);
+    setShowLogin(true);
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await AuthService.logout();
+      setCurrentUser(null);
+    } catch (err) {
+      console.error('Ошибка при выходе:', err);
+    }
   }, []);
 
   const handleShowLogin = useCallback(() => {
     setShowLogin(true);
+    setShowRegister(false);
+    setLoginError('');
+  }, []);
+
+  const handleShowRegister = useCallback(() => {
+    setShowRegister(true);
+    setShowLogin(false);
+    setLoginError('');
+  }, []);
+
+  const handleCancelAuth = useCallback(() => {
+    setShowLogin(false);
+    setShowRegister(false);
     setLoginError('');
   }, []);
 
@@ -111,33 +120,14 @@ const App: React.FC = () => {
     }
   }, [data.categories]);
 
-  const handleCancelLogin = useCallback(() => {
-    setShowLogin(false);
-  }, []);
-
   const handleReload = useCallback(() => {
     window.location.reload();
   }, []);
 
-  if (isAdmin) {
-    return (
-      <AdminPanel
-        data={data}
-        onUpdateData={handleUpdateData}
-        onLogout={handleLogout}
-        onLogoClick={handleLogoClick}
-      />
-    );
-  }
-
-  if (showLogin) {
-    return (
-      <Login
-        onLogin={handleLogin}
-        onCancel={handleCancelLogin}
-        error={loginError}
-      />
-    );
+  // Если пользователь авторизован, перенаправляем на админку
+  if (currentUser) {
+    window.location.href = '/admin';
+    return null;
   }
 
   if (loading) {
@@ -185,6 +175,22 @@ const App: React.FC = () => {
           </div>
         </div>
         <AdminButton onLogin={handleShowLogin} />
+
+        {showLogin && (
+          <Login
+            onLogin={handleLogin}
+            onCancel={handleCancelAuth}
+            onShowRegister={handleShowRegister}
+            error={loginError}
+          />
+        )}
+
+        {showRegister && (
+          <Register
+            onSuccess={handleRegisterSuccess}
+            onBackToLogin={handleShowLogin}
+          />
+        )}
       </div>
     </ThemeProvider>
   );

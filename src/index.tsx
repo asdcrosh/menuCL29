@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import AppRouter from './AppRouter';
 import './index.css';
 
 const root = ReactDOM.createRoot(
@@ -11,7 +11,7 @@ const renderApp = () => {
   try {
     root.render(
       <React.StrictMode>
-        <App />
+        <AppRouter />
       </React.StrictMode>
     );
   } catch (error) {

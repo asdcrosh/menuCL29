@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useMemo } from 'react';
-import { MenuData, Category, MenuItem, SubCategory } from '../types/menu';
+import { MenuData, Category, MenuItem, SubCategory, AdminUser } from '../types/menu';
 import { DatabaseService } from '../services/database';
 import { FileUploadService } from '../services/fileUpload';
 import EmojiPicker from './EmojiPicker';
@@ -10,6 +10,7 @@ interface AdminPanelProps {
   onUpdateData: (data: MenuData, action?: string, itemName?: string) => void;
   onLogout: () => void;
   onLogoClick?: () => void;
+  currentUser?: AdminUser;
 }
 
 interface ModalProps {
@@ -407,7 +408,7 @@ const ItemForm: React.FC<{
   );
 });
 
-const AdminPanel: React.FC<AdminPanelProps> = React.memo(({ data, onUpdateData, onLogout, onLogoClick }) => {
+const AdminPanel: React.FC<AdminPanelProps> = React.memo(({ data, onUpdateData, onLogout, onLogoClick, currentUser }) => {
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddSubCategory, setShowAddSubCategory] = useState(false);
@@ -694,6 +695,12 @@ const AdminPanel: React.FC<AdminPanelProps> = React.memo(({ data, onUpdateData, 
           <div className="admin-title">
             <h1>Панель администратора</h1>
             <p>Управление меню ресторана</p>
+            {currentUser && (
+              <div className="user-info">
+                <span>Пользователь: {currentUser.username}</span>
+                {currentUser.email && <span>Email: {currentUser.email}</span>}
+              </div>
+            )}
           </div>
           <div className="admin-actions">
             <button onClick={onLogout} className="logout-button">
