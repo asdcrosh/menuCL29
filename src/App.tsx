@@ -17,7 +17,11 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    // Проверяем localStorage при инициализации
+    const savedAdminState = localStorage.getItem('isAdmin');
+    return savedAdminState === 'true';
+  });
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
 
@@ -56,6 +60,28 @@ const App: React.FC = () => {
     }
   }, [data.categories, activeCategory]);
 
+  // Автоматический выход через 8 часов (28800000 мс)
+  useEffect(() => {
+    if (isAdmin) {
+      const sessionTimeout = 8 * 60 * 60 * 1000; // 8 часов
+      const loginTime = localStorage.getItem('adminLoginTime');
+      
+      if (loginTime) {
+        const timeSinceLogin = Date.now() - parseInt(loginTime);
+        if (timeSinceLogin > sessionTimeout) {
+          // Сессия истекла
+          handleLogout();
+          return;
+        }
+      }
+      
+      // Устанавливаем время входа, если его нет
+      if (!loginTime) {
+        localStorage.setItem('adminLoginTime', Date.now().toString());
+      }
+    }
+  }, [isAdmin]);
+
   const handleCategoryChange = (categoryId: string) => {
     setActiveCategory(categoryId);
   };
@@ -68,6 +94,9 @@ const App: React.FC = () => {
     // Простая проверка авторизации (в реальном проекте используйте более безопасные методы)
     if (username === 'Skibina' && password === '3059') {
       setIsAdmin(true);
+      // Сохраняем состояние в localStorage
+      localStorage.setItem('isAdmin', 'true');
+      localStorage.setItem('adminLoginTime', Date.now().toString());
       setShowLogin(false);
       setLoginError('');
     } else {
@@ -77,6 +106,9 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setIsAdmin(false);
+    // Очищаем состояние из localStorage
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('adminLoginTime');
   };
 
   const handleShowLogin = () => {
