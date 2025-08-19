@@ -20,7 +20,31 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(() => {
     // Проверяем localStorage при инициализации
     const savedAdminState = localStorage.getItem('isAdmin');
-    return savedAdminState === 'true';
+    const savedLoginTime = localStorage.getItem('adminLoginTime');
+    
+    console.log('🔍 Восстановление состояния админа:', {
+      savedAdminState,
+      savedLoginTime,
+      currentTime: Date.now()
+    });
+    
+    if (savedAdminState === 'true' && savedLoginTime) {
+      const timeSinceLogin = Date.now() - parseInt(savedLoginTime);
+      const sessionTimeout = 8 * 60 * 60 * 1000; // 8 часов
+      
+      if (timeSinceLogin < sessionTimeout) {
+        console.log('✅ Сессия админа восстановлена');
+        return true;
+      } else {
+        console.log('⏰ Сессия админа истекла, очищаем данные');
+        localStorage.removeItem('isAdmin');
+        localStorage.removeItem('adminLoginTime');
+        return false;
+      }
+    }
+    
+    console.log('❌ Состояние админа не найдено');
+    return false;
   });
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
@@ -60,26 +84,9 @@ const App: React.FC = () => {
     }
   }, [data.categories, activeCategory]);
 
-  // Автоматический выход через 8 часов (28800000 мс)
+  // Проверяем состояние админа при изменении
   useEffect(() => {
-    if (isAdmin) {
-      const sessionTimeout = 8 * 60 * 60 * 1000; // 8 часов
-      const loginTime = localStorage.getItem('adminLoginTime');
-      
-      if (loginTime) {
-        const timeSinceLogin = Date.now() - parseInt(loginTime);
-        if (timeSinceLogin > sessionTimeout) {
-          // Сессия истекла
-          handleLogout();
-          return;
-        }
-      }
-      
-      // Устанавливаем время входа, если его нет
-      if (!loginTime) {
-        localStorage.setItem('adminLoginTime', Date.now().toString());
-      }
-    }
+    console.log('🔄 Состояние isAdmin изменилось:', isAdmin);
   }, [isAdmin]);
 
   const handleCategoryChange = (categoryId: string) => {
@@ -93,10 +100,12 @@ const App: React.FC = () => {
   const handleLogin = (username: string, password: string) => {
     // Простая проверка авторизации (в реальном проекте используйте более безопасные методы)
     if (username === 'Skibina' && password === '3059') {
+      console.log('🔐 Вход в админ-панель');
       setIsAdmin(true);
       // Сохраняем состояние в localStorage
       localStorage.setItem('isAdmin', 'true');
       localStorage.setItem('adminLoginTime', Date.now().toString());
+      console.log('💾 Состояние сохранено в localStorage');
       setShowLogin(false);
       setLoginError('');
     } else {
@@ -105,10 +114,12 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    console.log('🚪 Выход из админ-панели');
     setIsAdmin(false);
     // Очищаем состояние из localStorage
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('adminLoginTime');
+    console.log('🧹 localStorage очищен');
   };
 
   const handleShowLogin = () => {
