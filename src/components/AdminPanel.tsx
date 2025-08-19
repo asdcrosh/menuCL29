@@ -160,6 +160,7 @@ const ItemForm: React.FC<{
   const [image, setImage] = useState(item?.image || '');
   const [categoryId, setCategoryId] = useState(item?.category || categories[0]?.id || '');
   const [subCategoryId, setSubCategoryId] = useState(item?.subCategory || '');
+  const [available, setAvailable] = useState(item?.available ?? true);
 
   const selectedCategory = categories.find(cat => cat.id === categoryId);
   const subCategories = selectedCategory?.subCategories || [];
@@ -175,7 +176,7 @@ const ItemForm: React.FC<{
         image: image.trim(),
         category: categoryId,
         subCategory: subCategoryId,
-        available: true
+        available: available
       });
     }
   };
@@ -260,6 +261,17 @@ const ItemForm: React.FC<{
             </option>
           ))}
         </select>
+      </div>
+      <div className="form-group">
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={available}
+            onChange={(e) => setAvailable(e.target.checked)}
+          />
+          <span className="checkmark"></span>
+          Доступен для заказа
+        </label>
       </div>
       <div className="form-actions">
         <button type="button" onClick={onCancel} className="btn-secondary">
