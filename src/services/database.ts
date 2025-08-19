@@ -1,8 +1,39 @@
 import { supabase } from '../config/supabase';
 import { MenuData, Category, SubCategory, MenuItem } from '../types/menu';
 
-export class DatabaseService {
+class DatabaseService {
+  private static cache: {
+    menuData: MenuData | null;
+    lastFetch: number | null;
+    cacheTimeout: number;
+  } = {
+    menuData: null,
+    lastFetch: null,
+    cacheTimeout: 5 * 60 * 1000 // 5 минут
+  };
+
+  private static isCacheValid(): boolean {
+    if (!this.cache.menuData || !this.cache.lastFetch) {
+      return false;
+    }
+    return Date.now() - this.cache.lastFetch < this.cacheTimeout;
+  }
+
+  private static updateCache(data: MenuData): void {
+    this.cache.menuData = data;
+    this.cache.lastFetch = Date.now();
+  }
+
+  private static clearCache(): void {
+    this.cache.menuData = null;
+    this.cache.lastFetch = null;
+  }
+
   static async getMenuData(): Promise<MenuData> {
+    if (this.isCacheValid() && this.cache.menuData) {
+      return this.cache.menuData;
+    }
+
     try {
       if (!supabase) {
         throw new Error('Supabase не настроен');
@@ -35,6 +66,7 @@ export class DatabaseService {
         .order('created_at');
 
       if (itemsError) throw itemsError;
+
       const categories: Category[] = categoriesData.map(cat => ({
         id: cat.id.toString(),
         name: cat.name,
@@ -55,20 +87,23 @@ export class DatabaseService {
                 price: item.price,
                 category: cat.id.toString(),
                 subCategory: sub.id.toString(),
-                                 available: item.available,
-                 imageUrl: item.image_url,
-                 image: item.image_url
+                available: item.available,
+                imageUrl: item.image_url,
+                image: item.image_url
               }))
           }))
       }));
 
-      return {
+      const result = {
         restaurant: {
           name: restaurantData.name,
           description: restaurantData.description
         },
         categories
       };
+
+      this.updateCache(result);
+      return result;
     } catch (error) {
       return import('../data/menu.json').then(module => module.default);
     }
@@ -90,6 +125,7 @@ export class DatabaseService {
       .single();
 
     if (error) throw error;
+    this.clearCache();
     return data.id;
   }
 
@@ -109,6 +145,7 @@ export class DatabaseService {
       .eq('id', parseInt(id));
 
     if (error) throw error;
+    this.clearCache();
   }
 
   static async updateCategoryOrder(categoryId: string, newOrderIndex: number): Promise<void> {
@@ -125,6 +162,7 @@ export class DatabaseService {
       .eq('id', parseInt(categoryId));
 
     if (error) throw error;
+    this.clearCache();
   }
 
   static async deleteCategory(id: string): Promise<void> {
@@ -138,6 +176,7 @@ export class DatabaseService {
       .eq('id', parseInt(id));
 
     if (error) throw error;
+    this.clearCache();
   }
 
   static async addSubCategory(subCategory: Omit<SubCategory, 'id' | 'items'>): Promise<number> {
@@ -156,6 +195,7 @@ export class DatabaseService {
       .single();
 
     if (error) throw error;
+    this.clearCache();
     return data.id;
   }
 
@@ -169,11 +209,13 @@ export class DatabaseService {
       .update({
         name: subCategory.name,
         category_id: subCategory.categoryId ? parseInt(subCategory.categoryId) : undefined,
+        order_index: subCategory.orderIndex,
         updated_at: new Date().toISOString()
       })
       .eq('id', parseInt(id));
 
     if (error) throw error;
+    this.clearCache();
   }
 
   static async deleteSubCategory(id: string): Promise<void> {
@@ -187,6 +229,7 @@ export class DatabaseService {
       .eq('id', parseInt(id));
 
     if (error) throw error;
+    this.clearCache();
   }
 
   static async addItem(item: Omit<MenuItem, 'id'>): Promise<number> {
@@ -201,13 +244,14 @@ export class DatabaseService {
         description: item.description,
         price: item.price,
         sub_category_id: parseInt(item.subCategory),
-        available: item.available ?? true,
-        image_url: item.image || item.imageUrl || null
+        available: item.available,
+        image_url: item.image
       })
       .select('id')
       .single();
 
     if (error) throw error;
+    this.clearCache();
     return data.id;
   }
 
@@ -224,12 +268,13 @@ export class DatabaseService {
         price: item.price,
         sub_category_id: item.subCategory ? parseInt(item.subCategory) : undefined,
         available: item.available,
-        image_url: item.image || item.imageUrl,
+        image_url: item.image,
         updated_at: new Date().toISOString()
       })
       .eq('id', parseInt(id));
 
     if (error) throw error;
+    this.clearCache();
   }
 
   static async deleteItem(id: string): Promise<void> {
@@ -243,6 +288,7 @@ export class DatabaseService {
       .eq('id', parseInt(id));
 
     if (error) throw error;
+    this.clearCache();
   }
 
   static async resetToInitialData(): Promise<void> {
@@ -254,53 +300,45 @@ export class DatabaseService {
       await supabase.from('items').delete().neq('id', 0);
       await supabase.from('sub_categories').delete().neq('id', 0);
       await supabase.from('categories').delete().neq('id', 0);
+
       const { data: category, error: categoryError } = await supabase
         .from('categories')
         .insert({
           name: 'Напитки',
           icon: '☕',
-          order_index: 1
+          order_index: 0
         })
         .select('id')
         .single();
 
-      if (categoryError || !category) {
-        throw new Error('Ошибка при создании категории: ' + categoryError?.message);
-      }
+      if (categoryError) throw categoryError;
 
       const { data: subCategory, error: subCategoryError } = await supabase
         .from('sub_categories')
         .insert({
-          name: 'Классические напитки',
+          name: 'Горячие напитки',
           category_id: category.id,
-          order_index: 1
+          order_index: 0
         })
         .select('id')
         .single();
 
-      if (subCategoryError || !subCategory) {
-        throw new Error('Ошибка при создании подкатегории: ' + subCategoryError?.message);
-      }
+      if (subCategoryError) throw subCategoryError;
 
-      await supabase.from('items').insert([
-        {
-          name: 'Американо',
-          description: 'Классический эспрессо с горячей водой',
-          price: 150,
-          sub_category_id: subCategory.id,
-          available: true
-        },
-        {
-          name: 'Капучино',
-          description: 'Эспрессо с молочной пенкой',
-          price: 180,
-          sub_category_id: subCategory.id,
-          available: true
-        }
-      ]);
+      await supabase.from('items').insert({
+        name: 'Капучино',
+        description: 'Классический итальянский кофе с молочной пенкой',
+        price: 150,
+        sub_category_id: subCategory.id,
+        available: true,
+        image_url: null
+      });
 
+      this.clearCache();
     } catch (error) {
       throw error;
     }
   }
 }
+
+export { DatabaseService };

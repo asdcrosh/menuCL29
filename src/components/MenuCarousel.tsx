@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { MenuItem as MenuItemType } from '../types/menu';
 import MenuItem from './MenuItem';
 import MenuGrid from './MenuGrid';
@@ -9,14 +9,14 @@ interface MenuCarouselProps {
   title?: string;
 }
 
-const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
+const MenuCarousel: React.FC<MenuCarouselProps> = React.memo(({ items, title }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  const minSwipeDistance = isMobile ? 30 : 50; // Меньшее расстояние для мобильных
+  const minSwipeDistance = useMemo(() => isMobile ? 30 : 50, [isMobile]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -29,32 +29,32 @@ const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrentIndex((prevIndex) => 
       prevIndex === items.length - 1 ? 0 : prevIndex + 1
     );
-  };
+  }, [items.length]);
 
-  const prevSlide = () => {
+  const prevSlide = useCallback(() => {
     setCurrentIndex((prevIndex) => 
       prevIndex === 0 ? items.length - 1 : prevIndex - 1
     );
-  };
+  }, [items.length]);
 
-  const goToSlide = (index: number) => {
+  const goToSlide = useCallback((index: number) => {
     setCurrentIndex(index);
-  };
+  }, []);
 
-  const onTouchStart = (e: React.TouchEvent) => {
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
-  };
+  }, []);
 
-  const onTouchMove = (e: React.TouchEvent) => {
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
     setTouchEnd(e.targetTouches[0].clientX);
-  };
+  }, []);
 
-  const onTouchEnd = () => {
+  const onTouchEnd = useCallback(() => {
     if (!touchStart || !touchEnd) return;
     
     const distance = touchStart - touchEnd;
@@ -67,19 +67,19 @@ const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
     if (isRightSwipe) {
       prevSlide();
     }
-  };
+  }, [touchStart, touchEnd, minSwipeDistance, nextSlide, prevSlide]);
 
   useEffect(() => {
-    if (isMobile) return; // Отключаем автослайд на мобильных
+    if (isMobile) return;
     
     const interval = setInterval(() => {
       if (items.length > 1) {
         nextSlide();
       }
-    }, 5000); // Переключение каждые 5 секунд
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [items.length, currentIndex, isMobile]);
+  }, [items.length, isMobile, nextSlide]);
 
   if (items.length === 0) {
     return null;
@@ -100,42 +100,46 @@ const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          <div 
-            className="carousel-track"
-            style={{
-              transform: `translateX(-${currentIndex * 100}%)`,
-            }}
-          >
-            {items.map((item, index) => (
-              <div key={item.id} className="carousel-slide">
-                <MenuItem item={item} />
-              </div>
-            ))}
-          </div>
+          {items.map((item, index) => (
+            <div
+              key={item.id}
+              className={`carousel-item ${index === currentIndex ? 'active' : ''}`}
+              style={{
+                transform: `translateX(${(index - currentIndex) * 100}%)`
+              }}
+            >
+              <MenuItem item={item} />
+            </div>
+          ))}
         </div>
         
         {items.length > 1 && (
           <>
             <button 
-              className="carousel-button carousel-button-prev" 
+              className="carousel-button prev" 
               onClick={prevSlide}
-              aria-label="Предыдущий слайд"
+              aria-label="Предыдущий"
             >
-              ‹
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+              </svg>
             </button>
+            
             <button 
-              className="carousel-button carousel-button-next" 
+              className="carousel-button next" 
               onClick={nextSlide}
-              aria-label="Следующий слайд"
+              aria-label="Следующий"
             >
-              ›
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+              </svg>
             </button>
             
             <div className="carousel-dots">
               {items.map((_, index) => (
                 <button
                   key={index}
-                  className={`carousel-dot ${index === currentIndex ? 'active' : ''}`}
+                  className={`dot ${index === currentIndex ? 'active' : ''}`}
                   onClick={() => goToSlide(index)}
                   aria-label={`Перейти к слайду ${index + 1}`}
                 />
@@ -146,6 +150,6 @@ const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
       </div>
     </div>
   );
-};
+});
 
 export default MenuCarousel;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import './ImageWithFallback.css';
 
 interface ImageWithFallbackProps {
@@ -7,9 +7,18 @@ interface ImageWithFallbackProps {
   className?: string;
 }
 
-const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, className = '' }) => {
+const ImageWithFallback: React.FC<ImageWithFallbackProps> = React.memo(({ src, alt, className = '' }) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+
+  const handleLoad = useCallback(() => {
+    setImageLoading(false);
+  }, []);
+
+  const handleError = useCallback(() => {
+    setImageError(true);
+    setImageLoading(false);
+  }, []);
 
   if (!src || imageError) {
     return (
@@ -27,13 +36,10 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({ src, alt, classNa
       src={src}
       alt={alt}
       className={`${className} ${imageLoading ? 'loading' : ''}`}
-      onLoad={() => setImageLoading(false)}
-      onError={() => {
-        setImageError(true);
-        setImageLoading(false);
-      }}
+      onLoad={handleLoad}
+      onError={handleError}
     />
   );
-};
+});
 
 export default ImageWithFallback;

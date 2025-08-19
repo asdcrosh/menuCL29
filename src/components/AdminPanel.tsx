@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { MenuData, Category, MenuItem, SubCategory } from '../types/menu';
 import { DatabaseService } from '../services/database';
 import { FileUploadService } from '../services/fileUpload';
@@ -19,7 +19,7 @@ interface ModalProps {
   title: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, children, title }) => {
   if (!isOpen) return null;
 
   return (
@@ -35,22 +35,34 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
       </div>
     </div>
   );
-};
+});
 
 const CategoryForm: React.FC<{
   category?: Category;
   onSubmit: (data: Omit<Category, 'id' | 'subCategories'>) => void;
   onCancel: () => void;
-}> = ({ category, onSubmit, onCancel }) => {
+}> = React.memo(({ category, onSubmit, onCancel }) => {
   const [name, setName] = useState(category?.name || '');
   const [icon, setIcon] = useState(category?.icon || '');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && icon.trim()) {
       onSubmit({ name: name.trim(), icon: icon.trim() });
     }
-  };
+  }, [name, icon, onSubmit]);
+
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  }, []);
+
+  const handleIconSelect = useCallback((emoji: string) => {
+    setIcon(emoji);
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    onCancel();
+  }, [onCancel]);
 
   return (
     <form onSubmit={handleSubmit} className="form">
@@ -60,7 +72,7 @@ const CategoryForm: React.FC<{
           id="categoryName"
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={handleNameChange}
           placeholder="Например: Напитки"
           required
         />
@@ -70,11 +82,11 @@ const CategoryForm: React.FC<{
         <EmojiPicker
           categoryName={name}
           selectedEmoji={icon}
-          onEmojiSelect={setIcon}
+          onEmojiSelect={handleIconSelect}
         />
       </div>
       <div className="form-actions">
-        <button type="button" onClick={onCancel} className="btn-secondary">
+        <button type="button" onClick={handleCancel} className="btn-secondary">
           Отмена
         </button>
         <button type="submit" className="btn-primary">
@@ -83,23 +95,35 @@ const CategoryForm: React.FC<{
       </div>
     </form>
   );
-};
+});
 
 const SubCategoryForm: React.FC<{
   subCategory?: SubCategory;
   categories: Category[];
   onSubmit: (data: Omit<SubCategory, 'id'>) => void;
   onCancel: () => void;
-}> = ({ subCategory, categories, onSubmit, onCancel }) => {
+}> = React.memo(({ subCategory, categories, onSubmit, onCancel }) => {
   const [name, setName] = useState(subCategory?.name || '');
   const [categoryId, setCategoryId] = useState(subCategory?.categoryId || categories[0]?.id || '');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && categoryId) {
       onSubmit({ name: name.trim(), categoryId, items: [] });
     }
-  };
+  }, [name, categoryId, onSubmit]);
+
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  }, []);
+
+  const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCategoryId(e.target.value);
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    onCancel();
+  }, [onCancel]);
 
   return (
     <form onSubmit={handleSubmit} className="form">
@@ -109,7 +133,7 @@ const SubCategoryForm: React.FC<{
           id="subCategoryName"
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={handleNameChange}
           placeholder="Например: Горячие напитки"
           required
         />
@@ -119,7 +143,7 @@ const SubCategoryForm: React.FC<{
         <select
           id="subCategoryCategory"
           value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
+          onChange={handleCategoryChange}
           required
         >
           {categories.map(category => (
@@ -130,7 +154,7 @@ const SubCategoryForm: React.FC<{
         </select>
       </div>
       <div className="form-actions">
-        <button type="button" onClick={onCancel} className="btn-secondary">
+        <button type="button" onClick={handleCancel} className="btn-secondary">
           Отмена
         </button>
         <button type="submit" className="btn-primary">
@@ -139,17 +163,17 @@ const SubCategoryForm: React.FC<{
       </div>
     </form>
   );
-};
+});
 
 const ItemForm: React.FC<{
   item?: MenuItem;
   categories: Category[];
   onSubmit: (data: Omit<MenuItem, 'id'>) => void;
   onCancel: () => void;
-}> = ({ item, categories, onSubmit, onCancel }) => {
+}> = React.memo(({ item, categories, onSubmit, onCancel }) => {
   const [name, setName] = useState(item?.name || '');
   const [description, setDescription] = useState(item?.description || '');
-  const [price, setPrice] = useState(item?.price || '');
+  const [price, setPrice] = useState(item?.price?.toString() || '');
   const [image, setImage] = useState(item?.image || '');
   const [categoryId, setCategoryId] = useState(item?.category || categories[0]?.id || '');
   const [subCategoryId, setSubCategoryId] = useState(item?.subCategory || '');
@@ -158,16 +182,70 @@ const ItemForm: React.FC<{
   const [uploadProgress, setUploadProgress] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const selectedCategory = categories.find(cat => cat.id === categoryId);
-  const subCategories = selectedCategory?.subCategories || [];
+  const selectedCategory = useMemo(() => {
+    return categories.find(cat => cat.id === categoryId);
+  }, [categories, categoryId]);
 
-  const handleFileUpload = async (file: File) => {
-    if (!file) return;
+  const subCategories = useMemo(() => {
+    return selectedCategory?.subCategories || [];
+  }, [selectedCategory]);
 
-    setIsUploading(true);
-    setUploadProgress('Загрузка изображения...');
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim() && price && categoryId && subCategoryId) {
+      onSubmit({
+        name: name.trim(),
+        description: description.trim(),
+        price: parseFloat(price.toString()),
+        image: image.trim(),
+        category: categoryId,
+        subCategory: subCategoryId,
+        available: available
+      });
+    }
+  }, [name, description, price, image, categoryId, subCategoryId, available, onSubmit]);
 
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  }, []);
+
+  const handleDescriptionChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDescription(e.target.value);
+  }, []);
+
+  const handlePriceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setPrice(e.target.value);
+  }, []);
+
+  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setImage(e.target.value);
+  }, []);
+
+  const handleCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCategoryId(e.target.value);
+    setSubCategoryId('');
+  }, []);
+
+  const handleSubCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSubCategoryId(e.target.value);
+  }, []);
+
+  const handleAvailableChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setAvailable(e.target.checked);
+  }, []);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileUpload(file);
+    }
+  }, []);
+
+  const handleFileUpload = useCallback(async (file: File) => {
     try {
+      setIsUploading(true);
+      setUploadProgress('Загрузка изображения...');
+      
       const result = await FileUploadService.uploadImage(file);
       setImage(result.url);
       setUploadProgress('Изображение успешно загружено!');
@@ -184,29 +262,18 @@ const ItemForm: React.FC<{
     } finally {
       setIsUploading(false);
     }
-  };
+  }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleFileUpload(file);
+  const handleRemoveImage = useCallback(() => {
+    setImage('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
-  };
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (name.trim() && price && categoryId && subCategoryId) {
-      onSubmit({
-        name: name.trim(),
-        description: description.trim(),
-        price: parseFloat(price.toString()),
-        image: image.trim(),
-        category: categoryId,
-        subCategory: subCategoryId,
-        available: available
-      });
-    }
-  };
+  const handleCancel = useCallback(() => {
+    onCancel();
+  }, [onCancel]);
 
   return (
     <form onSubmit={handleSubmit} className="form">
@@ -216,7 +283,7 @@ const ItemForm: React.FC<{
           id="itemName"
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={handleNameChange}
           placeholder="Например: Капучино"
           required
         />
@@ -226,83 +293,30 @@ const ItemForm: React.FC<{
         <textarea
           id="itemDescription"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Описание блюда..."
+          onChange={handleDescriptionChange}
+          placeholder="Описание блюда"
           rows={3}
         />
       </div>
       <div className="form-group">
-        <label htmlFor="itemPrice">Цена (₽)</label>
+        <label htmlFor="itemPrice">Цена</label>
         <input
           id="itemPrice"
           type="number"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          placeholder="150"
-          min="0"
           step="0.01"
+          min="0"
+          value={price}
+          onChange={handlePriceChange}
+          placeholder="0.00"
           required
         />
-      </div>
-      <div className="form-group">
-        <label htmlFor="itemImage">Изображение блюда</label>
-        <div className="image-upload-container">
-          <input
-            ref={fileInputRef}
-            id="itemImage"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="file-input"
-            disabled={isUploading}
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="upload-button"
-            disabled={isUploading}
-          >
-            {isUploading ? 'Загрузка...' : 'Выбрать изображение'}
-          </button>
-          {uploadProgress && (
-            <div className={`upload-progress ${uploadProgress.includes('Ошибка') ? 'error' : 'success'}`}>
-              {uploadProgress}
-            </div>
-          )}
-          {image && (
-            <div className="current-image">
-              <img src={image} alt="Текущее изображение" className="preview-image" />
-              <button
-                type="button"
-                onClick={() => setImage('')}
-                className="remove-image-btn"
-                title="Удалить изображение"
-              >
-                ×
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="image-url-input">
-          <label htmlFor="itemImageUrl">Или введите URL изображения</label>
-          <input
-            id="itemImageUrl"
-            type="url"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="https://example.com/image.jpg"
-          />
-        </div>
       </div>
       <div className="form-group">
         <label htmlFor="itemCategory">Категория</label>
         <select
           id="itemCategory"
           value={categoryId}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
-            setSubCategoryId('');
-          }}
+          onChange={handleCategoryChange}
           required
         >
           {categories.map(category => (
@@ -317,9 +331,8 @@ const ItemForm: React.FC<{
         <select
           id="itemSubCategory"
           value={subCategoryId}
-          onChange={(e) => setSubCategoryId(e.target.value)}
+          onChange={handleSubCategoryChange}
           required
-          disabled={!categoryId}
         >
           <option value="">Выберите подкатегорию</option>
           {subCategories.map(subCategory => (
@@ -330,18 +343,60 @@ const ItemForm: React.FC<{
         </select>
       </div>
       <div className="form-group">
+        <label>Изображение</label>
+        <div className="image-upload-container">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="file-input"
+            disabled={isUploading}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="upload-button"
+            disabled={isUploading}
+          >
+            {isUploading ? 'Загрузка...' : 'Выбрать файл'}
+          </button>
+          {uploadProgress && (
+            <div className="upload-progress">{uploadProgress}</div>
+          )}
+        </div>
+        {image && (
+          <div className="current-image">
+            <img src={image} alt="Preview" className="preview-image" />
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              className="remove-image-btn"
+            >
+              Удалить
+            </button>
+          </div>
+        )}
+        <input
+          type="url"
+          value={image}
+          onChange={handleImageChange}
+          placeholder="https://example.com/image.jpg"
+          className="image-url-input"
+        />
+      </div>
+      <div className="form-group">
         <label className="checkbox-label">
           <input
             type="checkbox"
             checked={available}
-            onChange={(e) => setAvailable(e.target.checked)}
+            onChange={handleAvailableChange}
           />
-          <span className="checkmark"></span>
-          Доступен для заказа
+          <span>Доступен для заказа</span>
         </label>
       </div>
       <div className="form-actions">
-        <button type="button" onClick={onCancel} className="btn-secondary">
+        <button type="button" onClick={handleCancel} className="btn-secondary">
           Отмена
         </button>
         <button type="submit" className="btn-primary">
@@ -350,21 +405,19 @@ const ItemForm: React.FC<{
       </div>
     </form>
   );
-};
+});
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, onLogoClick }) => {
-  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [editingSubCategory, setEditingSubCategory] = useState<SubCategory | null>(null);
+const AdminPanel: React.FC<AdminPanelProps> = React.memo(({ data, onUpdateData, onLogout, onLogoClick }) => {
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddSubCategory, setShowAddSubCategory] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingSubCategory, setEditingSubCategory] = useState<SubCategory | null>(null);
   const [activeTab, setActiveTab] = useState<'categories' | 'items'>('categories');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
 
-
-
-  const handleAddItem = async (itemData: Omit<MenuItem, 'id'>) => {
+  const handleAddItem = useCallback(async (itemData: Omit<MenuItem, 'id'>) => {
     try {
       const itemId = await DatabaseService.addItem(itemData);
       
@@ -387,9 +440,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
     } catch (error) {
       alert('Ошибка при добавлении блюда. Проверьте подключение к базе данных.');
     }
-  };
+  }, [data, onUpdateData]);
 
-  const handleUpdateItem = async (updatedItem: MenuItem) => {
+  const handleUpdateItem = useCallback(async (updatedItem: MenuItem) => {
     try {
       await DatabaseService.updateItem(updatedItem.id, updatedItem);
       
@@ -414,12 +467,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
     } catch (error) {
       alert('Ошибка при обновлении блюда. Проверьте подключение к базе данных.');
     }
-  };
+  }, [data, onUpdateData]);
 
-  const handleDeleteItem = async (itemId: string, categoryId: string, subCategoryId: string) => {
+  const handleDeleteItem = useCallback(async (itemId: string, categoryId: string, subCategoryId: string) => {
     if (window.confirm('Вы уверены, что хотите удалить это блюдо?')) {
       try {
         await DatabaseService.deleteItem(itemId);
+        
         const updatedData = { ...data };
         const category = updatedData.categories.find(cat => cat.id === categoryId);
         if (category) {
@@ -433,9 +487,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
         alert('Ошибка при удалении блюда. Проверьте подключение к базе данных.');
       }
     }
-  };
+  }, [data, onUpdateData]);
 
-  const handleAddCategory = async (categoryData: Omit<Category, 'id' | 'subCategories'>) => {
+  const handleAddCategory = useCallback(async (categoryData: Omit<Category, 'id' | 'subCategories'>) => {
     try {
       const categoryId = await DatabaseService.addCategory(categoryData);
       
@@ -452,9 +506,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
     } catch (error) {
       alert('Ошибка при добавлении категории. Проверьте подключение к базе данных.');
     }
-  };
+  }, [data, onUpdateData]);
 
-  const handleUpdateCategory = async (updatedCategory: Category) => {
+  const handleUpdateCategory = useCallback(async (updatedCategory: Category) => {
     try {
       await DatabaseService.updateCategory(updatedCategory.id, updatedCategory);
       
@@ -468,9 +522,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
     } catch (error) {
       alert('Ошибка при обновлении категории. Проверьте подключение к базе данных.');
     }
-  };
+  }, [data, onUpdateData]);
 
-  const handleDeleteCategory = async (categoryId: string) => {
+  const handleDeleteCategory = useCallback(async (categoryId: string) => {
     if (window.confirm('Вы уверены, что хотите удалить эту категорию? Все блюда в ней также будут удалены.')) {
       try {
         await DatabaseService.deleteCategory(categoryId);
@@ -482,9 +536,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
         alert('Ошибка при удалении категории. Проверьте подключение к базе данных.');
       }
     }
-  };
+  }, [data, onUpdateData]);
 
-  const handleMoveCategory = async (categoryId: string, direction: 'up' | 'down') => {
+  const handleMoveCategory = useCallback(async (categoryId: string, direction: 'up' | 'down') => {
     try {
       const currentIndex = data.categories.findIndex(cat => cat.id === categoryId);
       if (currentIndex === -1) return;
@@ -504,12 +558,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
 
       onUpdateData(updatedData);
     } catch (error) {
-      console.error('Ошибка при перемещении категории:', error);
       alert('Ошибка при перемещении категории. Проверьте подключение к базе данных.');
     }
-  };
+  }, [data, onUpdateData]);
 
-  const handleAddSubCategory = async (subCategoryData: Omit<SubCategory, 'id'>) => {
+  const handleAddSubCategory = useCallback(async (subCategoryData: Omit<SubCategory, 'id'>) => {
     try {
       const subCategoryId = await DatabaseService.addSubCategory(subCategoryData);
       
@@ -526,12 +579,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
         onUpdateData(updatedData);
         setShowAddSubCategory(false);
       }
-            } catch (error) {
-          alert('Ошибка при добавлении подкатегории. Проверьте подключение к базе данных.');
-        }
-  };
+    } catch (error) {
+      alert('Ошибка при добавлении подкатегории. Проверьте подключение к базе данных.');
+    }
+  }, [data, selectedCategory, onUpdateData]);
 
-  const handleUpdateSubCategory = async (updatedSubCategory: SubCategory) => {
+  const handleUpdateSubCategory = useCallback(async (updatedSubCategory: SubCategory) => {
     try {
       await DatabaseService.updateSubCategory(updatedSubCategory.id, updatedSubCategory);
       
@@ -547,9 +600,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
     } catch (error) {
       alert('Ошибка при обновлении подкатегории. Проверьте подключение к базе данных.');
     }
-  };
+  }, [data, onUpdateData]);
 
-  const handleDeleteSubCategory = async (subCategoryId: string) => {
+  const handleDeleteSubCategory = useCallback(async (subCategoryId: string) => {
     if (window.confirm('Вы уверены, что хотите удалить эту подкатегорию? Все блюда в ней также будут удалены.')) {
       try {
         await DatabaseService.deleteSubCategory(subCategoryId);
@@ -561,9 +614,78 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
         onUpdateData(updatedData);
       } catch (error) {
         alert('Ошибка при удалении подкатегории. Проверьте подключение к базе данных.');
-      }
     }
-  };
+    }
+  }, [data, onUpdateData]);
+
+  const handleTabChange = useCallback((tab: 'categories' | 'items') => {
+    setActiveTab(tab);
+  }, []);
+
+  const handleCategorySelect = useCallback((categoryId: string) => {
+    setSelectedCategory(categoryId);
+  }, []);
+
+  const handleShowAddCategory = useCallback(() => {
+    setShowAddCategory(true);
+  }, []);
+
+  const handleShowAddItem = useCallback(() => {
+    setShowAddItem(true);
+  }, []);
+
+  const handleShowAddSubCategory = useCallback(() => {
+    if (data.categories.length > 0) {
+      setSelectedCategory(data.categories[0].id);
+      setShowAddSubCategory(true);
+    }
+  }, [data.categories]);
+
+  const handleShowAddSubCategoryToCategory = useCallback((categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setShowAddSubCategory(true);
+  }, []);
+
+  const handleEditCategory = useCallback((category: Category) => {
+    setEditingCategory(category);
+  }, []);
+
+  const handleEditSubCategory = useCallback((subCategory: SubCategory) => {
+    setEditingSubCategory(subCategory);
+  }, []);
+
+  const handleEditItem = useCallback((item: MenuItem) => {
+    setEditingItem(item);
+  }, []);
+
+  const handleCloseModals = useCallback(() => {
+    setShowAddCategory(false);
+    setShowAddItem(false);
+    setShowAddSubCategory(false);
+    setEditingCategory(null);
+    setEditingSubCategory(null);
+    setEditingItem(null);
+  }, []);
+
+  const handleMoveCategoryUp = useCallback((categoryId: string) => {
+    handleMoveCategory(categoryId, 'up');
+  }, [handleMoveCategory]);
+
+  const handleMoveCategoryDown = useCallback((categoryId: string) => {
+    handleMoveCategory(categoryId, 'down');
+  }, [handleMoveCategory]);
+
+  const handleDeleteCategoryConfirm = useCallback((categoryId: string) => {
+    handleDeleteCategory(categoryId);
+  }, [handleDeleteCategory]);
+
+  const handleDeleteSubCategoryConfirm = useCallback((subCategoryId: string) => {
+    handleDeleteSubCategory(subCategoryId);
+  }, [handleDeleteSubCategory]);
+
+  const handleDeleteItemConfirm = useCallback((itemId: string, categoryId: string, subCategoryId: string) => {
+    handleDeleteItem(itemId, categoryId, subCategoryId);
+  }, [handleDeleteItem]);
 
   return (
     <div className="admin-panel">
@@ -589,13 +711,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
           <div className="sidebar-tabs">
             <button 
               className={`tab-button ${activeTab === 'categories' ? 'active' : ''}`}
-              onClick={() => setActiveTab('categories')}
+              onClick={() => handleTabChange('categories')}
             >
               Категории
             </button>
             <button 
               className={`tab-button ${activeTab === 'items' ? 'active' : ''}`}
-              onClick={() => setActiveTab('items')}
+              onClick={() => handleTabChange('items')}
             >
               Блюда
             </button>
@@ -606,9 +728,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
               <div className="section-header">
                 <h3>Управление категориями</h3>
                 <button 
-                  onClick={() => {
-                    setShowAddCategory(true);
-                  }} 
+                  onClick={handleShowAddCategory} 
                   className="add-button"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -632,7 +752,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                     </div>
                     <div className="category-actions">
                       <button 
-                        onClick={() => handleMoveCategory(category.id, 'up')}
+                        onClick={() => handleMoveCategoryUp(category.id)}
                         className="action-button move"
                         title="Переместить вверх"
                         disabled={data.categories.indexOf(category) === 0}
@@ -642,7 +762,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                         </svg>
                       </button>
                       <button 
-                        onClick={() => handleMoveCategory(category.id, 'down')}
+                        onClick={() => handleMoveCategoryDown(category.id)}
                         className="action-button move"
                         title="Переместить вниз"
                         disabled={data.categories.indexOf(category) === data.categories.length - 1}
@@ -652,9 +772,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                         </svg>
                       </button>
                       <button 
-                        onClick={() => {
-                          setEditingCategory(category);
-                        }}
+                        onClick={() => handleEditCategory(category)}
                         className="action-button edit"
                         title="Редактировать"
                       >
@@ -663,7 +781,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                         </svg>
                       </button>
                       <button 
-                        onClick={() => handleDeleteCategory(category.id)}
+                        onClick={() => handleDeleteCategoryConfirm(category.id)}
                         className="action-button delete"
                         title="Удалить"
                       >
@@ -683,9 +801,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
               <div className="section-header">
                 <h3>Управление блюдами</h3>
                 <button 
-                  onClick={() => {
-                    setShowAddItem(true);
-                  }} 
+                  onClick={handleShowAddItem} 
                   className="add-button"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -699,211 +815,193 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                 <label>Выберите категорию:</label>
                 <select 
                   value={selectedCategory} 
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={(e) => handleCategorySelect(e.target.value)}
                   className="category-select"
                 >
                   <option value="">Все категории</option>
                   {data.categories.map(category => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="section-header">
+                <h3>Управление подкатегориями</h3>
+                <button 
+                  onClick={handleShowAddSubCategory} 
+                  className="add-button"
+                  disabled={data.categories.length === 0}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                  Добавить подкатегорию
+                </button>
               </div>
             </div>
           )}
         </div>
 
         <div className="admin-main">
-          <div className="main-header">
-            <h2>
-              {activeTab === 'categories' ? 'Категории и подкатегории' : 'Список блюд'}
-            </h2>
-            {activeTab === 'categories' && (
-              <button 
-                onClick={() => {
-                  if (data.categories.length > 0) {
-                    setSelectedCategory(data.categories[0].id);
-                    setShowAddSubCategory(true);
-                  }
-                }} 
-                className="add-button"
-                disabled={data.categories.length === 0}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                </svg>
-                Добавить подкатегорию
-              </button>
-            )}
-          </div>
-
-          <div className="content-area">
-            {activeTab === 'categories' && (
-              <div className="categories-grid">
-                {data.categories.map(category => (
-                  <div key={category.id} className="category-card">
-                    <div className="category-card-header">
-                      <div className="category-card-title">
-                        <span className="category-icon">{category.icon}</span>
-                        <h3>{category.name}</h3>
-                      </div>
-                      <button 
-                        onClick={() => {
-                          setSelectedCategory(category.id);
-                          setShowAddSubCategory(true);
-                        }} 
-                        className="add-subcategory-button"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                        </svg>
-                      </button>
+          {activeTab === 'categories' && (
+            <div className="categories-grid">
+              {data.categories.map(category => (
+                <div key={category.id} className="category-card">
+                  <div className="category-card-header">
+                    <div className="category-card-title">
+                      <span className="category-icon">{category.icon}</span>
+                      <h3>{category.name}</h3>
                     </div>
-                    
-                    <div className="subcategories-list">
-                      {category.subCategories.map(subCategory => (
-                        <div key={subCategory.id} className="subcategory-item">
-                          <div className="subcategory-info">
-                            <h4>{subCategory.name}</h4>
-                            <span className="item-count">{subCategory.items.length} блюд</span>
-                          </div>
-                          <div className="subcategory-actions">
-                            <button 
-                              onClick={() => {
-                                setEditingSubCategory(subCategory);
-                              }}
-                              className="action-button edit"
-                              title="Редактировать"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                              </svg>
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteSubCategory(subCategory.id)}
-                              className="action-button delete"
-                              title="Удалить"
-                            >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      {category.subCategories.length === 0 && (
-                        <div className="empty-state">
-                          <p>Нет подкатегорий</p>
-                        </div>
-                      )}
-                    </div>
+                    <button 
+                      onClick={() => handleShowAddSubCategoryToCategory(category.id)} 
+                      className="add-subcategory-button"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                      </svg>
+                    </button>
                   </div>
-                ))}
-              </div>
-            )}
+                  
+                  <div className="subcategories-list">
+                    {category.subCategories.map(subCategory => (
+                      <div key={subCategory.id} className="subcategory-item">
+                        <div className="subcategory-info">
+                          <h4>{subCategory.name}</h4>
+                          <span className="item-count">{subCategory.items.length} блюд</span>
+                        </div>
+                        <div className="subcategory-actions">
+                          <button 
+                            onClick={() => handleEditSubCategory(subCategory)}
+                            className="action-button edit"
+                            title="Редактировать"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                            </svg>
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteSubCategoryConfirm(subCategory.id)}
+                            className="action-button delete"
+                            title="Удалить"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {category.subCategories.length === 0 && (
+                      <div className="empty-state">
+                        <p>Нет подкатегорий</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
-            {activeTab === 'items' && (
-              <div className="items-grid">
-                {data.categories
-                  .filter(category => !selectedCategory || category.id === selectedCategory)
-                  .map(category => 
-                    category.subCategories.map(subCategory =>
-                      subCategory.items.map(item => (
-                        <div key={item.id} className="item-card">
-                          <div className="item-image">
-                            {item.image ? (
-                              <img src={item.image} alt={item.name} />
-                            ) : (
-                              <div className="item-image-placeholder">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                                </svg>
-                              </div>
-                            )}
-                          </div>
-                          <div className="item-content">
-                            <div className="item-header">
-                              <h4>{item.name}</h4>
-                              <span className="item-price">{item.price} ₽</span>
-                            </div>
-                            <p className="item-description">{item.description}</p>
-                            <div className="item-categories">
-                              <span className="category-badge">{category.name}</span>
-                              <span className="subcategory-badge">{subCategory.name}</span>
-                            </div>
-                          </div>
-                          <div className="item-actions">
-                            <button 
-                              onClick={() => {
-                                setEditingItem(item);
-                              }}
-                              className="action-button edit"
-                              title="Редактировать"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+          {activeTab === 'items' && (
+            <div className="items-grid">
+              {data.categories
+                .filter(category => !selectedCategory || category.id === selectedCategory)
+                .map(category => 
+                  category.subCategories.map(subCategory =>
+                    subCategory.items.map(item => (
+                      <div key={item.id} className="item-card">
+                        <div className="item-image">
+                          {item.image ? (
+                            <img src={item.image} alt={item.name} />
+                          ) : (
+                            <div className="item-image-placeholder">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
                               </svg>
-                            </button>
-                            <button 
-                              onClick={() => handleDeleteItem(item.id, category.id, subCategory.id)}
-                              className="action-button delete"
-                              title="Удалить"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                              </svg>
-                            </button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="item-info">
+                          <h4>{item.name}</h4>
+                          <p>{item.description}</p>
+                          <div className="item-meta">
+                            <span className="item-price">{item.price} ₽</span>
+                            <span className={`item-status ${item.available ? 'available' : 'unavailable'}`}>
+                              {item.available ? 'Доступен' : 'Недоступен'}
+                            </span>
                           </div>
                         </div>
-                      ))
-                    )
-                  )}
-              </div>
-            )}
-          </div>
+                        <div className="item-actions">
+                          <button 
+                            onClick={() => handleEditItem(item)}
+                            className="action-button edit"
+                            title="Редактировать"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                            </svg>
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteItemConfirm(item.id, category.id, subCategory.id)}
+                            className="action-button delete"
+                            title="Удалить"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )
+                )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Модальные окна */}
       <Modal
         isOpen={showAddCategory}
-        onClose={() => setShowAddCategory(false)}
+        onClose={handleCloseModals}
         title="Добавить категорию"
       >
         <CategoryForm
           onSubmit={handleAddCategory}
-          onCancel={() => setShowAddCategory(false)}
+          onCancel={handleCloseModals}
         />
       </Modal>
 
       <Modal
         isOpen={!!editingCategory}
-        onClose={() => setEditingCategory(null)}
+        onClose={handleCloseModals}
         title="Редактировать категорию"
       >
         {editingCategory && (
           <CategoryForm
             category={editingCategory}
             onSubmit={(data) => handleUpdateCategory({ ...editingCategory, ...data })}
-            onCancel={() => setEditingCategory(null)}
+            onCancel={handleCloseModals}
           />
         )}
       </Modal>
 
       <Modal
         isOpen={showAddSubCategory}
-        onClose={() => setShowAddSubCategory(false)}
+        onClose={handleCloseModals}
         title="Добавить подкатегорию"
       >
         <SubCategoryForm
           categories={data.categories}
           onSubmit={handleAddSubCategory}
-          onCancel={() => setShowAddSubCategory(false)}
+          onCancel={handleCloseModals}
         />
       </Modal>
 
       <Modal
         isOpen={!!editingSubCategory}
-        onClose={() => setEditingSubCategory(null)}
+        onClose={handleCloseModals}
         title="Редактировать подкатегорию"
       >
         {editingSubCategory && (
@@ -911,26 +1009,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
             subCategory={editingSubCategory}
             categories={data.categories}
             onSubmit={(data) => handleUpdateSubCategory({ ...editingSubCategory, ...data })}
-            onCancel={() => setEditingSubCategory(null)}
+            onCancel={handleCloseModals}
           />
         )}
       </Modal>
 
       <Modal
         isOpen={showAddItem}
-        onClose={() => setShowAddItem(false)}
+        onClose={handleCloseModals}
         title="Добавить блюдо"
       >
         <ItemForm
           categories={data.categories}
           onSubmit={handleAddItem}
-          onCancel={() => setShowAddItem(false)}
+          onCancel={handleCloseModals}
         />
       </Modal>
 
       <Modal
         isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
+        onClose={handleCloseModals}
         title="Редактировать блюдо"
       >
         {editingItem && (
@@ -938,12 +1036,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
             item={editingItem}
             categories={data.categories}
             onSubmit={(data) => handleUpdateItem({ ...editingItem, ...data })}
-            onCancel={() => setEditingItem(null)}
+            onCancel={handleCloseModals}
           />
         )}
       </Modal>
     </div>
   );
-};
+});
 
 export default AdminPanel;

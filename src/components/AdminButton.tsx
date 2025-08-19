@@ -5,7 +5,7 @@ interface AdminButtonProps {
   onLogin: () => void;
 }
 
-const AdminButton: React.FC<AdminButtonProps> = ({ onLogin }) => {
+const AdminButton: React.FC<AdminButtonProps> = React.memo(({ onLogin }) => {
   return (
     <button 
       className="admin-button"
@@ -17,6 +17,6 @@ const AdminButton: React.FC<AdminButtonProps> = ({ onLogin }) => {
       </svg>
     </button>
   );
-};
+});
 
 export default AdminButton;

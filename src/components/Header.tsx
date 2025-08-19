@@ -8,7 +8,7 @@ interface HeaderProps {
   onLogoClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ restaurant, onLogoClick }) => {
+const Header: React.FC<HeaderProps> = React.memo(({ restaurant, onLogoClick }) => {
   return (
     <header className="header">
       <div className="container">
@@ -22,6 +22,6 @@ const Header: React.FC<HeaderProps> = ({ restaurant, onLogoClick }) => {
       </div>
     </header>
   );
-};
+});
 
 export default Header;

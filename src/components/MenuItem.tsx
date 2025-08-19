@@ -7,7 +7,7 @@ interface MenuItemProps {
   item: MenuItemType;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
+const MenuItem: React.FC<MenuItemProps> = React.memo(({ item }) => {
   return (
     <div className={`menu-item ${!item.available ? 'unavailable' : ''}`}>
       <div className="menu-item-image">
@@ -31,6 +31,6 @@ const MenuItem: React.FC<MenuItemProps> = ({ item }) => {
       </div>
     </div>
   );
-};
+});
 
 export default MenuItem;

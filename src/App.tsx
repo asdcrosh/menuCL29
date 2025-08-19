@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import CategoryTabs from './components/CategoryTabs';
@@ -39,23 +39,23 @@ const App: React.FC = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const data = await DatabaseService.getMenuData();
-        setData(data);
-        setError(null);
-      } catch (err) {
-        setData(menuData);
-        setError('База данных недоступна. Используются локальные данные.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await DatabaseService.getMenuData();
+      setData(data);
+      setError(null);
+    } catch (err) {
+      setData(menuData);
+      setError('База данных недоступна. Используются локальные данные.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   useEffect(() => {
     if (data.categories.length > 0 && !activeCategory) {
@@ -66,15 +66,15 @@ const App: React.FC = () => {
     }
   }, [data.categories, activeCategory]);
 
-  const handleCategoryChange = (categoryId: string) => {
+  const handleCategoryChange = useCallback((categoryId: string) => {
     setActiveCategory(categoryId);
-  };
+  }, []);
 
-  const getCurrentCategory = (): Category | null => {
+  const currentCategory = useMemo((): Category | null => {
     return data.categories.find(cat => cat.id === activeCategory) || null;
-  };
+  }, [data.categories, activeCategory]);
 
-  const handleLogin = (username: string, password: string) => {
+  const handleLogin = useCallback((username: string, password: string) => {
     if (username === 'admin' && password === 'password') {
       setIsAdmin(true);
       localStorage.setItem('isAdmin', 'true');
@@ -84,34 +84,40 @@ const App: React.FC = () => {
     } else {
       setLoginError('Неверное имя пользователя или пароль');
     }
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     setIsAdmin(false);
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('adminLoginTime');
-  };
+  }, []);
 
-  const handleShowLogin = () => {
+  const handleShowLogin = useCallback(() => {
     setShowLogin(true);
     setLoginError('');
-  };
+  }, []);
 
-  const handleUpdateData = async (newData: MenuData, action?: string, itemName?: string) => {
+  const handleUpdateData = useCallback(async (newData: MenuData, action?: string, itemName?: string) => {
     try {
       setData(newData);
     } catch (err) {
       alert('Ошибка при сохранении данных. Попробуйте еще раз.');
     }
-  };
+  }, []);
 
-
-
-  const handleLogoClick = () => {
+  const handleLogoClick = useCallback(() => {
     if (data.categories.length > 0) {
       setActiveCategory(data.categories[0].id);
     }
-  };
+  }, [data.categories]);
+
+  const handleCancelLogin = useCallback(() => {
+    setShowLogin(false);
+  }, []);
+
+  const handleReload = useCallback(() => {
+    window.location.reload();
+  }, []);
 
   if (isAdmin) {
     return (
@@ -128,7 +134,7 @@ const App: React.FC = () => {
     return (
       <Login
         onLogin={handleLogin}
-        onCancel={() => setShowLogin(false)}
+        onCancel={handleCancelLogin}
         error={loginError}
       />
     );
@@ -149,7 +155,7 @@ const App: React.FC = () => {
         <h2>Режим только чтение</h2>
         <p>{error}</p>
         <p>Админ-панель недоступна без настройки базы данных.</p>
-        <button onClick={() => window.location.reload()}>Обновить страницу</button>
+        <button onClick={handleReload}>Обновить страницу</button>
       </div>
     );
   }
@@ -165,13 +171,13 @@ const App: React.FC = () => {
         />
         <div className="menu-content">
           <div className="container">
-            {getCurrentCategory() && (
+            {currentCategory && (
               <SubCategorySection 
-                subCategories={getCurrentCategory()!.subCategories}
-                categoryName={getCurrentCategory()!.name}
+                subCategories={currentCategory.subCategories}
+                categoryName={currentCategory.name}
               />
             )}
-            {getCurrentCategory()?.subCategories.length === 0 && (
+            {currentCategory?.subCategories.length === 0 && (
               <div className="empty-state">
                 <p>В этой категории пока нет подкатегорий</p>
               </div>
@@ -184,4 +190,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default React.memo(App);

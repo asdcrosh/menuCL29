@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getEmojiForCategory, getPopularEmojis, getEmojisByCategory } from '../utils/emojiMapper';
 import './EmojiPicker.css';
 
@@ -8,7 +8,7 @@ interface EmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
 }
 
-const EmojiPicker: React.FC<EmojiPickerProps> = ({ categoryName, selectedEmoji, onEmojiSelect }) => {
+const EmojiPicker: React.FC<EmojiPickerProps> = React.memo(({ categoryName, selectedEmoji, onEmojiSelect }) => {
   const [showPicker, setShowPicker] = useState(false);
   const [suggestedEmoji, setSuggestedEmoji] = useState('');
   const [activeTab, setActiveTab] = useState('suggested');
@@ -20,19 +20,27 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ categoryName, selectedEmoji, 
     }
   }, [categoryName]);
 
-  const popularEmojis = getPopularEmojis();
-  const emojisByCategory = getEmojisByCategory();
+  const popularEmojis = useMemo(() => getPopularEmojis(), []);
+  const emojisByCategory = useMemo(() => getEmojisByCategory(), []);
 
-  const handleEmojiClick = (emoji: string) => {
+  const handleEmojiClick = useCallback((emoji: string) => {
     onEmojiSelect(emoji);
     setShowPicker(false);
-  };
+  }, [onEmojiSelect]);
 
-  const handleSuggestedClick = () => {
+  const handleSuggestedClick = useCallback(() => {
     if (suggestedEmoji) {
       onEmojiSelect(suggestedEmoji);
     }
-  };
+  }, [suggestedEmoji, onEmojiSelect]);
+
+  const handleTogglePicker = useCallback(() => {
+    setShowPicker(!showPicker);
+  }, [showPicker]);
+
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+  }, []);
 
   return (
     <div className="emoji-picker-container">
@@ -40,7 +48,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ categoryName, selectedEmoji, 
         <button
           type="button"
           className="emoji-button"
-          onClick={() => setShowPicker(!showPicker)}
+          onClick={handleTogglePicker}
           title="Выбрать эмодзи"
         >
           {selectedEmoji || '🍽️'}
@@ -63,21 +71,21 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ categoryName, selectedEmoji, 
             <button
               type="button"
               className={`tab-button ${activeTab === 'suggested' ? 'active' : ''}`}
-              onClick={() => setActiveTab('suggested')}
+              onClick={() => handleTabChange('suggested')}
             >
               Предложенные
             </button>
             <button
               type="button"
               className={`tab-button ${activeTab === 'popular' ? 'active' : ''}`}
-              onClick={() => setActiveTab('popular')}
+              onClick={() => handleTabChange('popular')}
             >
               Популярные
             </button>
             <button
               type="button"
               className={`tab-button ${activeTab === 'categories' ? 'active' : ''}`}
-              onClick={() => setActiveTab('categories')}
+              onClick={() => handleTabChange('categories')}
             >
               По категориям
             </button>
@@ -151,7 +159,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ categoryName, selectedEmoji, 
             <button
               type="button"
               className="close-button"
-              onClick={() => setShowPicker(false)}
+              onClick={handleTogglePicker}
             >
               Закрыть
             </button>
@@ -160,6 +168,6 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ categoryName, selectedEmoji, 
       )}
     </div>
   );
-};
+});
 
 export default EmojiPicker;

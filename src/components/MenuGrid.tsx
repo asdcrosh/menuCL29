@@ -8,7 +8,7 @@ interface MenuGridProps {
   title?: string;
 }
 
-const MenuGrid: React.FC<MenuGridProps> = ({ items, title }) => {
+const MenuGrid: React.FC<MenuGridProps> = React.memo(({ items, title }) => {
   if (items.length === 0) {
     return null;
   }
@@ -23,6 +23,6 @@ const MenuGrid: React.FC<MenuGridProps> = ({ items, title }) => {
       </div>
     </div>
   );
-};
+});
 
 export default MenuGrid;

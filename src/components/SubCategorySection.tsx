@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { SubCategory } from '../types/menu';
 import MenuGrid from './MenuGrid';
 import MenuCarousel from './MenuCarousel';
@@ -10,10 +10,16 @@ interface SubCategorySectionProps {
   categoryName: string;
 }
 
-const SubCategorySection: React.FC<SubCategorySectionProps> = ({ subCategories, categoryName }) => {
+const SubCategorySection: React.FC<SubCategorySectionProps> = React.memo(({ subCategories, categoryName }) => {
   const [activeSubCategory, setActiveSubCategory] = useState(subCategories[0]?.id || '');
   
-  const currentSubCategory = subCategories.find(sub => sub.id === activeSubCategory) || subCategories[0];
+  const currentSubCategory = useMemo(() => {
+    return subCategories.find(sub => sub.id === activeSubCategory) || subCategories[0];
+  }, [subCategories, activeSubCategory]);
+  
+  const handleSubCategoryChange = useCallback((subCategoryId: string) => {
+    setActiveSubCategory(subCategoryId);
+  }, []);
   
   if (!currentSubCategory) {
     return null;
@@ -33,12 +39,12 @@ const SubCategorySection: React.FC<SubCategorySectionProps> = ({ subCategories, 
         <SubCategoryTabs
           subCategories={subCategories}
           activeSubCategory={activeSubCategory}
-          onSubCategoryChange={setActiveSubCategory}
+          onSubCategoryChange={handleSubCategoryChange}
         />
         <MenuGrid items={currentSubCategory.items} title={currentSubCategory.name} />
       </div>
     </div>
   );
-};
+});
 
 export default SubCategorySection;

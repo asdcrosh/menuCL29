@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { SubCategory } from '../types/menu';
 import './SubCategoryTabs.css';
 
@@ -8,11 +8,15 @@ interface SubCategoryTabsProps {
   onSubCategoryChange: (subCategoryId: string) => void;
 }
 
-const SubCategoryTabs: React.FC<SubCategoryTabsProps> = ({ 
+const SubCategoryTabs: React.FC<SubCategoryTabsProps> = React.memo(({ 
   subCategories, 
   activeSubCategory, 
   onSubCategoryChange 
 }) => {
+  const handleSubCategoryClick = useCallback((subCategoryId: string) => {
+    onSubCategoryChange(subCategoryId);
+  }, [onSubCategoryChange]);
+
   return (
     <div className="subcategory-tabs">
       <div className="subcategory-tabs-container">
@@ -20,7 +24,7 @@ const SubCategoryTabs: React.FC<SubCategoryTabsProps> = ({
           <button
             key={subCategory.id}
             className={`subcategory-tab ${activeSubCategory === subCategory.id ? 'active' : ''}`}
-            onClick={() => onSubCategoryChange(subCategory.id)}
+            onClick={() => handleSubCategoryClick(subCategory.id)}
           >
             <span className="subcategory-tab-name">{subCategory.name}</span>
             <span className="subcategory-tab-count">{subCategory.items.length}</span>
@@ -29,6 +33,6 @@ const SubCategoryTabs: React.FC<SubCategoryTabsProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default SubCategoryTabs;

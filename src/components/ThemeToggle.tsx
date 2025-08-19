@@ -2,7 +2,7 @@ import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import './ThemeToggle.css';
 
-const ThemeToggle: React.FC = () => {
+const ThemeToggle: React.FC = React.memo(() => {
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -23,6 +23,6 @@ const ThemeToggle: React.FC = () => {
       </div>
     </button>
   );
-};
+});
 
 export default ThemeToggle;
