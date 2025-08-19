@@ -14,24 +14,20 @@ export class FileUploadService {
       throw new Error('Supabase не настроен');
     }
 
-    // Проверяем, что это изображение
     if (!file.type.startsWith('image/')) {
       throw new Error('Файл должен быть изображением');
     }
 
-    // Проверяем размер файла (максимум 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       throw new Error('Размер файла не должен превышать 5MB');
     }
 
-    // Генерируем уникальное имя файла
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `menu-items/${fileName}`;
 
     try {
-      // Загружаем файл в Supabase Storage
       const { data, error } = await supabase.storage
         .from('menu-images')
         .upload(filePath, file, {
@@ -43,7 +39,6 @@ export class FileUploadService {
         throw new Error(`Ошибка загрузки: ${error.message}`);
       }
 
-      // Получаем публичный URL
       const { data: urlData } = supabase.storage
         .from('menu-images')
         .getPublicUrl(filePath);
@@ -53,7 +48,6 @@ export class FileUploadService {
         path: filePath
       };
     } catch (error) {
-      console.error('Ошибка при загрузке изображения:', error);
       throw error;
     }
   }
@@ -75,7 +69,6 @@ export class FileUploadService {
         throw new Error(`Ошибка удаления: ${error.message}`);
       }
     } catch (error) {
-      console.error('Ошибка при удалении изображения:', error);
       throw error;
     }
   }
@@ -86,14 +79,12 @@ export class FileUploadService {
   static isValidImageUrl(url: string): boolean {
     if (!url) return false;
     
-    // Проверяем, что это URL
     try {
       new URL(url);
     } catch {
       return false;
     }
 
-    // Проверяем расширение файла
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
     const lowerUrl = url.toLowerCase();
     return imageExtensions.some(ext => lowerUrl.includes(ext));
@@ -111,7 +102,6 @@ export class FileUploadService {
         return pathname.substring(lastDotIndex + 1).toLowerCase();
       }
     } catch {
-      // Если не удается распарсить URL, возвращаем пустую строку
     }
     return '';
   }

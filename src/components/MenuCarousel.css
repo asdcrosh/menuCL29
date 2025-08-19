@@ -115,7 +115,6 @@
   transform: scale(1.3);
 }
 
-/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
   .menu-carousel-section {
     margin-bottom: 1rem;
@@ -155,7 +154,6 @@
   }
 }
 
-/* Анимации */
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -171,7 +169,6 @@
   animation: slideIn 0.5s ease-out;
 }
 
-/* Улучшения для touch устройств */
 @media (hover: none) and (pointer: coarse) {
   .carousel-button {
     width: 44px;
@@ -197,7 +194,6 @@
   }
 }
 
-/* Стили для всех устройств с touch поддержкой */
 .carousel-wrapper {
   touch-action: pan-y pinch-zoom;
   user-select: none;
@@ -210,7 +206,6 @@
   will-change: transform;
 }
 
-/* Визуальная обратная связь при свайпе */
 .carousel-wrapper:active {
   cursor: grabbing;
 }

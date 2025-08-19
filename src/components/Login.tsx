@@ -13,7 +13,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel, error }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Автофокус на поле username при открытии
   useEffect(() => {
     const usernameInput = document.getElementById('username') as HTMLInputElement;
     if (usernameInput) {
@@ -27,7 +26,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel, error }) => {
     
     setIsLoading(true);
     
-    // Имитация задержки для лучшего UX
     setTimeout(() => {
       onLogin(username, password);
       setIsLoading(false);

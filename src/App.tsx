@@ -9,7 +9,7 @@ import AdminButton from './components/AdminButton';
 import { MenuData, Category } from './types/menu';
 import { DatabaseService } from './services/database';
 import menuData from './data/menu.json';
-import { debugEnvironment } from './utils/debug';
+
 import './App.css';
 
 const App: React.FC = () => {
@@ -18,42 +18,28 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(() => {
-    // Проверяем localStorage при инициализации
     const savedAdminState = localStorage.getItem('isAdmin');
     const savedLoginTime = localStorage.getItem('adminLoginTime');
     
-    console.log('🔍 Восстановление состояния админа:', {
-      savedAdminState,
-      savedLoginTime,
-      currentTime: Date.now()
-    });
-    
     if (savedAdminState === 'true' && savedLoginTime) {
       const timeSinceLogin = Date.now() - parseInt(savedLoginTime);
-      const sessionTimeout = 8 * 60 * 60 * 1000; // 8 часов
+      const sessionTimeout = 8 * 60 * 60 * 1000;
       
       if (timeSinceLogin < sessionTimeout) {
-        console.log('✅ Сессия админа восстановлена');
         return true;
       } else {
-        console.log('⏰ Сессия админа истекла, очищаем данные');
         localStorage.removeItem('isAdmin');
         localStorage.removeItem('adminLoginTime');
         return false;
       }
     }
     
-    console.log('❌ Состояние админа не найдено');
     return false;
   });
   const [showLogin, setShowLogin] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  // Загружаем данные из базы данных при загрузке приложения
   useEffect(() => {
-    // Отладочная информация о переменных окружения
-    debugEnvironment();
-
     const loadData = async () => {
       try {
         setLoading(true);
@@ -61,8 +47,6 @@ const App: React.FC = () => {
         setData(data);
         setError(null);
       } catch (err) {
-        console.error('Ошибка при загрузке данных из базы:', err);
-        // Fallback к локальным данным
         setData(menuData);
         setError('База данных недоступна. Используются локальные данные.');
       } finally {
@@ -74,20 +58,13 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // Устанавливаем первую категорию как активную при загрузке
     if (data.categories.length > 0 && !activeCategory) {
       setActiveCategory(data.categories[0].id);
     }
-    // Если активная категория больше не существует, переключаемся на первую
     if (data.categories.length > 0 && activeCategory && !data.categories.find(cat => cat.id === activeCategory)) {
       setActiveCategory(data.categories[0].id);
     }
   }, [data.categories, activeCategory]);
-
-  // Проверяем состояние админа при изменении
-  useEffect(() => {
-    console.log('🔄 Состояние isAdmin изменилось:', isAdmin);
-  }, [isAdmin]);
 
   const handleCategoryChange = (categoryId: string) => {
     setActiveCategory(categoryId);
@@ -98,14 +75,10 @@ const App: React.FC = () => {
   };
 
   const handleLogin = (username: string, password: string) => {
-    // Простая проверка авторизации (в реальном проекте используйте более безопасные методы)
-    if (username === 'Skibina' && password === '3059') {
-      console.log('🔐 Вход в админ-панель');
+    if (username === 'admin' && password === 'password') {
       setIsAdmin(true);
-      // Сохраняем состояние в localStorage
       localStorage.setItem('isAdmin', 'true');
       localStorage.setItem('adminLoginTime', Date.now().toString());
-      console.log('💾 Состояние сохранено в localStorage');
       setShowLogin(false);
       setLoginError('');
     } else {
@@ -114,12 +87,9 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    console.log('🚪 Выход из админ-панели');
     setIsAdmin(false);
-    // Очищаем состояние из localStorage
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('adminLoginTime');
-    console.log('🧹 localStorage очищен');
   };
 
   const handleShowLogin = () => {
@@ -129,14 +99,8 @@ const App: React.FC = () => {
 
   const handleUpdateData = async (newData: MenuData, action?: string, itemName?: string) => {
     try {
-      // Обновляем локальное состояние
       setData(newData);
-      
-      // Здесь можно добавить логику для сохранения в базу данных
-      // Пока что просто обновляем локальное состояние
-      console.log('Данные обновлены:', action, itemName);
     } catch (err) {
-      console.error('Ошибка при сохранении данных:', err);
       alert('Ошибка при сохранении данных. Попробуйте еще раз.');
     }
   };
@@ -144,13 +108,11 @@ const App: React.FC = () => {
 
 
   const handleLogoClick = () => {
-    // Переход на главную страницу (первая категория)
     if (data.categories.length > 0) {
       setActiveCategory(data.categories[0].id);
     }
   };
 
-  // Если пользователь авторизован как админ, показываем админ-панель
   if (isAdmin) {
     return (
       <AdminPanel
@@ -162,7 +124,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Если показывается форма входа
   if (showLogin) {
     return (
       <Login
@@ -173,7 +134,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Показываем загрузку
   if (loading) {
     return (
       <div className="loading-screen">
@@ -183,7 +143,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Показываем ошибку
   if (error) {
     return (
       <div className="error-screen">
@@ -195,7 +154,6 @@ const App: React.FC = () => {
     );
   }
 
-  // Основной интерфейс меню
   return (
     <ThemeProvider>
       <div className="app">

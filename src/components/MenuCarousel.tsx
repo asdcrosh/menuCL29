@@ -16,10 +16,8 @@ const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Минимальное расстояние для свайпа
   const minSwipeDistance = isMobile ? 30 : 50; // Меньшее расстояние для мобильных
 
-  // Определение мобильного устройства
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -47,18 +45,15 @@ const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
     setCurrentIndex(index);
   };
 
-  // Обработка начала касания
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
 
-  // Обработка движения касания
   const onTouchMove = (e: React.TouchEvent) => {
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
-  // Обработка окончания касания
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
     
@@ -74,7 +69,6 @@ const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
     }
   };
 
-  // Автоматическое переключение слайдов (только на десктопе)
   useEffect(() => {
     if (isMobile) return; // Отключаем автослайд на мобильных
     
@@ -91,7 +85,6 @@ const MenuCarousel: React.FC<MenuCarouselProps> = ({ items, title }) => {
     return null;
   }
 
-  // На мобильных устройствах показываем сетку вместо карусели
   if (isMobile) {
     return <MenuGrid items={items} title={title} />;
   }

@@ -4,15 +4,12 @@ const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase URL или ключ не настроены. Приложение будет работать в режиме только чтение.');
 }
 
-// Создаем клиент только если переменные настроены
 export const supabase = supabaseUrl && supabaseAnonKey 
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-// Типы для базы данных
 export interface Database {
   public: {
     Tables: {

@@ -57,7 +57,6 @@
   color: #ffffff;
 }
 
-/* Показ/скрытие версий */
 .desktop-view {
   display: block;
 }
@@ -66,7 +65,6 @@
   display: none;
 }
 
-/* Десктоп подкатегории */
 .desktop-subcategory {
   margin-bottom: 2rem;
 }
@@ -112,7 +110,6 @@
 }
 
 
-/* Адаптивность */
 @media (max-width: 768px) {
   .subcategory-section {
     margin-bottom: 1.5rem;

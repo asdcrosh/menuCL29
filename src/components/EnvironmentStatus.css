@@ -97,7 +97,6 @@
   border: 1px solid #ffeaa7;
 }
 
-/* Темная тема */
 [data-theme="dark"] .environment-status {
   background: #2d3748;
   border-color: #4a5568;

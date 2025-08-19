@@ -1,4 +1,3 @@
-// Утилита для обработки ошибок базы данных
 export const getErrorMessage = (error: unknown, operation: string): string => {
   let baseMessage = `Ошибка при ${operation}. `;
   

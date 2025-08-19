@@ -2,16 +2,12 @@ import { supabase } from '../config/supabase';
 import { MenuData, Category, SubCategory, MenuItem } from '../types/menu';
 
 export class DatabaseService {
-  // Загрузка всех данных меню
   static async getMenuData(): Promise<MenuData> {
     try {
-      // Проверяем, настроен ли Supabase
       if (!supabase) {
-        console.warn('Supabase не настроен, используем локальные данные');
         throw new Error('Supabase не настроен');
       }
 
-      // Загружаем данные ресторана
       const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurant')
         .select('*')
@@ -19,7 +15,6 @@ export class DatabaseService {
 
       if (restaurantError) throw restaurantError;
 
-      // Загружаем категории
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
         .select('*')
@@ -27,7 +22,6 @@ export class DatabaseService {
 
       if (categoriesError) throw categoriesError;
 
-      // Загружаем подкатегории
       const { data: subCategoriesData, error: subCategoriesError } = await supabase
         .from('sub_categories')
         .select('*')
@@ -35,15 +29,12 @@ export class DatabaseService {
 
       if (subCategoriesError) throw subCategoriesError;
 
-      // Загружаем блюда
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
         .select('*')
         .order('created_at');
 
       if (itemsError) throw itemsError;
-
-      // Формируем структуру данных
       const categories: Category[] = categoriesData.map(cat => ({
         id: cat.id.toString(),
         name: cat.name,
@@ -79,29 +70,11 @@ export class DatabaseService {
         categories
       };
     } catch (error) {
-      console.error('Ошибка при загрузке данных из базы:', error);
-      
-      // Проверяем тип ошибки для лучшей диагностики
-      if (error instanceof Error) {
-        if (error.message.includes('Supabase не настроен')) {
-          console.log('⚠️ Supabase не настроен - используем fallback данные');
-        } else if (error.message.includes('fetch')) {
-          console.log('🌐 Ошибка сети - проверьте подключение к интернету');
-        } else if (error.message.includes('RLS')) {
-          console.log('🔒 Ошибка RLS - проверьте политики безопасности в Supabase');
-        } else {
-          console.log('❌ Неизвестная ошибка базы данных');
-        }
-      }
-      
-      // Возвращаем локальные данные как fallback
       return import('../data/menu.json').then(module => module.default);
     }
   }
 
-  // Добавление категории
   static async addCategory(category: Omit<Category, 'id' | 'subCategories'>): Promise<number> {
-    // Проверяем, настроен ли Supabase
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
     }
@@ -120,7 +93,6 @@ export class DatabaseService {
     return data.id;
   }
 
-  // Обновление категории
   static async updateCategory(id: string, category: Partial<Category>): Promise<void> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
@@ -139,7 +111,6 @@ export class DatabaseService {
     if (error) throw error;
   }
 
-  // Обновление порядка категорий
   static async updateCategoryOrder(categoryId: string, newOrderIndex: number): Promise<void> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
@@ -156,7 +127,6 @@ export class DatabaseService {
     if (error) throw error;
   }
 
-  // Удаление категории
   static async deleteCategory(id: string): Promise<void> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
@@ -170,7 +140,6 @@ export class DatabaseService {
     if (error) throw error;
   }
 
-  // Добавление подкатегории
   static async addSubCategory(subCategory: Omit<SubCategory, 'id' | 'items'>): Promise<number> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
@@ -190,7 +159,6 @@ export class DatabaseService {
     return data.id;
   }
 
-  // Обновление подкатегории
   static async updateSubCategory(id: string, subCategory: Partial<SubCategory>): Promise<void> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
@@ -208,7 +176,6 @@ export class DatabaseService {
     if (error) throw error;
   }
 
-  // Удаление подкатегории
   static async deleteSubCategory(id: string): Promise<void> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
@@ -222,7 +189,6 @@ export class DatabaseService {
     if (error) throw error;
   }
 
-  // Добавление блюда
   static async addItem(item: Omit<MenuItem, 'id'>): Promise<number> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
@@ -245,7 +211,6 @@ export class DatabaseService {
     return data.id;
   }
 
-  // Обновление блюда
   static async updateItem(id: string, item: Partial<MenuItem>): Promise<void> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
@@ -267,7 +232,6 @@ export class DatabaseService {
     if (error) throw error;
   }
 
-  // Удаление блюда
   static async deleteItem(id: string): Promise<void> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
@@ -281,19 +245,15 @@ export class DatabaseService {
     if (error) throw error;
   }
 
-  // Сброс к исходным данным
   static async resetToInitialData(): Promise<void> {
     if (!supabase) {
       throw new Error('Supabase не настроен - операция недоступна в режиме только чтение');
     }
 
     try {
-      // Очищаем все таблицы
       await supabase.from('items').delete().neq('id', 0);
       await supabase.from('sub_categories').delete().neq('id', 0);
       await supabase.from('categories').delete().neq('id', 0);
-
-      // Добавляем исходные данные
       const { data: category, error: categoryError } = await supabase
         .from('categories')
         .insert({
@@ -340,7 +300,6 @@ export class DatabaseService {
       ]);
 
     } catch (error) {
-      console.error('Ошибка при сбросе данных:', error);
       throw error;
     }
   }

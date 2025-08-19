@@ -20,7 +20,6 @@ interface ModalProps {
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
-  console.log('Modal render:', { isOpen, title }); // Отладка
   if (!isOpen) return null;
 
   return (
@@ -38,7 +37,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
   );
 };
 
-// Форма для категории
 const CategoryForm: React.FC<{
   category?: Category;
   onSubmit: (data: Omit<Category, 'id' | 'subCategories'>) => void;
@@ -49,7 +47,6 @@ const CategoryForm: React.FC<{
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('CategoryForm submit:', { name, icon }); // Отладка
     if (name.trim() && icon.trim()) {
       onSubmit({ name: name.trim(), icon: icon.trim() });
     }
@@ -88,7 +85,6 @@ const CategoryForm: React.FC<{
   );
 };
 
-// Форма для подкатегории
 const SubCategoryForm: React.FC<{
   subCategory?: SubCategory;
   categories: Category[];
@@ -100,7 +96,6 @@ const SubCategoryForm: React.FC<{
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('SubCategoryForm submit:', { name, categoryId }); // Отладка
     if (name.trim() && categoryId) {
       onSubmit({ name: name.trim(), categoryId, items: [] });
     }
@@ -146,7 +141,6 @@ const SubCategoryForm: React.FC<{
   );
 };
 
-// Форма для блюда
 const ItemForm: React.FC<{
   item?: MenuItem;
   categories: Category[];
@@ -178,15 +172,12 @@ const ItemForm: React.FC<{
       setImage(result.url);
       setUploadProgress('Изображение успешно загружено!');
       
-      // Очищаем сообщение через 2 секунды
       setTimeout(() => {
         setUploadProgress('');
       }, 2000);
     } catch (error) {
-      console.error('Ошибка при загрузке изображения:', error);
       setUploadProgress(`Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
       
-      // Очищаем сообщение об ошибке через 3 секунды
       setTimeout(() => {
         setUploadProgress('');
       }, 3000);
@@ -204,7 +195,6 @@ const ItemForm: React.FC<{
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('ItemForm submit:', { name, description, price, categoryId, subCategoryId }); // Отладка
     if (name.trim() && price && categoryId && subCategoryId) {
       onSubmit({
         name: name.trim(),
@@ -372,22 +362,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'categories' | 'items'>('categories');
 
-  console.log('AdminPanel state:', { 
-    showAddItem, 
-    showAddCategory, 
-    showAddSubCategory, 
-    editingItem: !!editingItem,
-    editingCategory: !!editingCategory,
-    editingSubCategory: !!editingSubCategory
-  }); // Отладка
+
 
   const handleAddItem = async (itemData: Omit<MenuItem, 'id'>) => {
-    console.log('handleAddItem called:', itemData); // Отладка
     try {
-      // Добавляем в базу данных
       const itemId = await DatabaseService.addItem(itemData);
       
-      // Обновляем локальное состояние
       const newItem: MenuItem = {
         ...itemData,
         id: itemId.toString(),
@@ -405,28 +385,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
         }
       }
     } catch (error) {
-      console.error('Ошибка при добавлении блюда:', error);
       alert('Ошибка при добавлении блюда. Проверьте подключение к базе данных.');
     }
   };
 
   const handleUpdateItem = async (updatedItem: MenuItem) => {
-    console.log('handleUpdateItem called:', updatedItem); // Отладка
     try {
-      // Обновляем в базе данных
       await DatabaseService.updateItem(updatedItem.id, updatedItem);
       
-      // Обновляем локальное состояние
       const updatedData = { ...data };
       
-      // Удаляем из старой подкатегории
       updatedData.categories.forEach(category => {
         category.subCategories.forEach(subCategory => {
           subCategory.items = subCategory.items.filter(item => item.id !== updatedItem.id);
         });
       });
 
-      // Добавляем в новую подкатегорию
       const category = updatedData.categories.find(cat => cat.id === updatedItem.category);
       if (category) {
         const subCategory = category.subCategories.find(sub => sub.id === updatedItem.subCategory);
@@ -438,7 +412,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
       onUpdateData(updatedData);
       setEditingItem(null);
     } catch (error) {
-      console.error('Ошибка при обновлении блюда:', error);
       alert('Ошибка при обновлении блюда. Проверьте подключение к базе данных.');
     }
   };
@@ -446,10 +419,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
   const handleDeleteItem = async (itemId: string, categoryId: string, subCategoryId: string) => {
     if (window.confirm('Вы уверены, что хотите удалить это блюдо?')) {
       try {
-        // Удаляем из базы данных
         await DatabaseService.deleteItem(itemId);
-        
-        // Обновляем локальное состояние
         const updatedData = { ...data };
         const category = updatedData.categories.find(cat => cat.id === categoryId);
         if (category) {
@@ -460,19 +430,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
           }
         }
       } catch (error) {
-        console.error('Ошибка при удалении блюда:', error);
         alert('Ошибка при удалении блюда. Проверьте подключение к базе данных.');
       }
     }
   };
 
   const handleAddCategory = async (categoryData: Omit<Category, 'id' | 'subCategories'>) => {
-    console.log('handleAddCategory called:', categoryData); // Отладка
     try {
-      // Добавляем в базу данных
       const categoryId = await DatabaseService.addCategory(categoryData);
       
-      // Обновляем локальное состояние
       const newCategory: Category = {
         ...categoryData,
         id: categoryId.toString(),
@@ -484,18 +450,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
       onUpdateData(updatedData, 'add', categoryData.name);
       setShowAddCategory(false);
     } catch (error) {
-      console.error('Ошибка при добавлении категории:', error);
       alert('Ошибка при добавлении категории. Проверьте подключение к базе данных.');
     }
   };
 
   const handleUpdateCategory = async (updatedCategory: Category) => {
-    console.log('handleUpdateCategory called:', updatedCategory); // Отладка
     try {
-      // Обновляем в базе данных
       await DatabaseService.updateCategory(updatedCategory.id, updatedCategory);
       
-      // Обновляем локальное состояние
       const updatedData = { ...data };
       const index = updatedData.categories.findIndex(cat => cat.id === updatedCategory.id);
       if (index !== -1) {
@@ -504,7 +466,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
       }
       setEditingCategory(null);
     } catch (error) {
-      console.error('Ошибка при обновлении категории:', error);
       alert('Ошибка при обновлении категории. Проверьте подключение к базе данных.');
     }
   };
@@ -512,15 +473,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
   const handleDeleteCategory = async (categoryId: string) => {
     if (window.confirm('Вы уверены, что хотите удалить эту категорию? Все блюда в ней также будут удалены.')) {
       try {
-        // Удаляем из базы данных
         await DatabaseService.deleteCategory(categoryId);
         
-        // Обновляем локальное состояние
         const updatedData = { ...data };
         updatedData.categories = updatedData.categories.filter(cat => cat.id !== categoryId);
         onUpdateData(updatedData);
       } catch (error) {
-        console.error('Ошибка при удалении категории:', error);
         alert('Ошибка при удалении категории. Проверьте подключение к базе данных.');
       }
     }
@@ -534,16 +492,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
       const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
       if (newIndex < 0 || newIndex >= data.categories.length) return;
 
-      // Обновляем порядок в базе данных
       await DatabaseService.updateCategoryOrder(categoryId, newIndex);
       await DatabaseService.updateCategoryOrder(data.categories[newIndex].id, currentIndex);
 
-      // Обновляем локальное состояние
       const updatedData = { ...data };
       const [movedCategory] = updatedData.categories.splice(currentIndex, 1);
       updatedData.categories.splice(newIndex, 0, movedCategory);
-      
-      // Обновляем orderIndex для всех категорий
       updatedData.categories.forEach((cat, index) => {
         cat.orderIndex = index;
       });
@@ -556,12 +510,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
   };
 
   const handleAddSubCategory = async (subCategoryData: Omit<SubCategory, 'id'>) => {
-    console.log('handleAddSubCategory called:', subCategoryData); // Отладка
     try {
-      // Добавляем в базу данных
       const subCategoryId = await DatabaseService.addSubCategory(subCategoryData);
       
-      // Обновляем локальное состояние
       const newSubCategory: SubCategory = {
         ...subCategoryData,
         id: subCategoryId.toString(),
@@ -576,33 +527,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
         setShowAddSubCategory(false);
       }
             } catch (error) {
-          console.error('Ошибка при добавлении подкатегории:', error);
-          
-          let errorMessage = 'Ошибка при добавлении подкатегории. ';
-          
-          if (error instanceof Error) {
-            if (error.message.includes('Supabase не настроен')) {
-              errorMessage += 'GitHub Secrets не настроены. Следуйте инструкции в QUICK_SETUP.md';
-            } else if (error.message.includes('RLS')) {
-              errorMessage += 'Ошибка RLS. Отключите Row Level Security в Supabase.';
-            } else if (error.message.includes('fetch')) {
-              errorMessage += 'Ошибка сети. Проверьте подключение к интернету.';
-            } else {
-              errorMessage += 'Проверьте подключение к базе данных.';
-            }
-          }
-          
-          alert(errorMessage);
+          alert('Ошибка при добавлении подкатегории. Проверьте подключение к базе данных.');
         }
   };
 
   const handleUpdateSubCategory = async (updatedSubCategory: SubCategory) => {
-    console.log('handleUpdateSubCategory called:', updatedSubCategory); // Отладка
     try {
-      // Обновляем в базе данных
       await DatabaseService.updateSubCategory(updatedSubCategory.id, updatedSubCategory);
       
-      // Обновляем локальное состояние
       const updatedData = { ...data };
       updatedData.categories.forEach(category => {
         const index = category.subCategories.findIndex(sub => sub.id === updatedSubCategory.id);
@@ -613,7 +545,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
       onUpdateData(updatedData);
       setEditingSubCategory(null);
     } catch (error) {
-      console.error('Ошибка при обновлении подкатегории:', error);
       alert('Ошибка при обновлении подкатегории. Проверьте подключение к базе данных.');
     }
   };
@@ -621,17 +552,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
   const handleDeleteSubCategory = async (subCategoryId: string) => {
     if (window.confirm('Вы уверены, что хотите удалить эту подкатегорию? Все блюда в ней также будут удалены.')) {
       try {
-        // Удаляем из базы данных
         await DatabaseService.deleteSubCategory(subCategoryId);
         
-        // Обновляем локальное состояние
         const updatedData = { ...data };
         updatedData.categories.forEach(category => {
           category.subCategories = category.subCategories.filter(sub => sub.id !== subCategoryId);
         });
         onUpdateData(updatedData);
       } catch (error) {
-        console.error('Ошибка при удалении подкатегории:', error);
         alert('Ошибка при удалении подкатегории. Проверьте подключение к базе данных.');
       }
     }
@@ -679,7 +607,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                 <h3>Управление категориями</h3>
                 <button 
                   onClick={() => {
-                    console.log('Add category button clicked'); // Отладка
                     setShowAddCategory(true);
                   }} 
                   className="add-button"
@@ -726,7 +653,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                       </button>
                       <button 
                         onClick={() => {
-                          console.log('Edit category button clicked:', category.id); // Отладка
                           setEditingCategory(category);
                         }}
                         className="action-button edit"
@@ -758,7 +684,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                 <h3>Управление блюдами</h3>
                 <button 
                   onClick={() => {
-                    console.log('Add item button clicked'); // Отладка
                     setShowAddItem(true);
                   }} 
                   className="add-button"
@@ -795,7 +720,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
             {activeTab === 'categories' && (
               <button 
                 onClick={() => {
-                  console.log('Add subcategory button clicked'); // Отладка
                   if (data.categories.length > 0) {
                     setSelectedCategory(data.categories[0].id);
                     setShowAddSubCategory(true);
@@ -824,7 +748,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                       </div>
                       <button 
                         onClick={() => {
-                          console.log('Add subcategory to category button clicked:', category.id); // Отладка
                           setSelectedCategory(category.id);
                           setShowAddSubCategory(true);
                         }} 
@@ -846,7 +769,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                           <div className="subcategory-actions">
                             <button 
                               onClick={() => {
-                                console.log('Edit subcategory button clicked:', subCategory.id); // Отладка
                                 setEditingSubCategory(subCategory);
                               }}
                               className="action-button edit"
@@ -912,7 +834,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ data, onUpdateData, onLogout, o
                           <div className="item-actions">
                             <button 
                               onClick={() => {
-                                console.log('Edit item button clicked:', item.id); // Отладка
                                 setEditingItem(item);
                               }}
                               className="action-button edit"

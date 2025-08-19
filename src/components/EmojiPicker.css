@@ -209,7 +209,6 @@
   transform: translateY(-1px);
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
   .emoji-picker {
     position: fixed;
@@ -239,7 +238,6 @@
   }
 }
 
-/* Анимации */
 @keyframes slideIn {
   from {
     opacity: 0;
