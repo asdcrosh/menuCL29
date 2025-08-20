@@ -35,6 +35,15 @@ class DatabaseService {
     }
 
     try {
+      // Сначала пробуем наш безопасный API
+      const response = await fetch('/api/menu.php?path=menu');
+      if (response.ok) {
+        const data = await response.json();
+        this.updateCache(data);
+        return data;
+      }
+
+      // Fallback на Supabase (если настроен)
       if (!supabase) {
         throw new Error('Supabase не настроен');
       }
