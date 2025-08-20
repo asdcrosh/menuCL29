@@ -3,10 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-}
+// Проверяем, что URL и ключ валидны
+const isValidUrl = supabaseUrl && supabaseUrl !== 'your_supabase_url_here' && supabaseUrl.startsWith('https://');
+const isValidKey = supabaseAnonKey && supabaseAnonKey !== 'your_supabase_anon_key_here';
 
-export const supabase = supabaseUrl && supabaseAnonKey 
+export const supabase = isValidUrl && isValidKey 
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
